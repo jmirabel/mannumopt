@@ -1,0 +1,2 @@
+- http://pages.cs.wisc.edu/~swright/nd2016/IMA_augmentedLagrangian.pdf
+- Numerical Optimization by Nocedal and Wright
