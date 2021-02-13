@@ -7,4 +7,6 @@ function(add_cpp_test name)
 endfunction()
 
 add_cpp_test(bfgs)
+add_cpp_test(newton-ls)
+add_cpp_test(newton-tr)
 add_cpp_test(choleski)

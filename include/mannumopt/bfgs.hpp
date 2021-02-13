@@ -4,7 +4,6 @@
 #include <iomanip>
 
 #include <mannumopt/fwd.hpp>
-#include <mannumopt/decomposition/choleski.hpp>
 
 namespace mannumopt {
 

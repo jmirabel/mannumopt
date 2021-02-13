@@ -35,7 +35,7 @@ template<int N, template<int> class Function, class... Args> void test_newtonTR(
   Eigen::Matrix<double, N, 1> x;
   for (int i = 0; i < 20; ++i) {
     x.setRandom();
-    x.array() + 1.;
+    x.array() += 1.;
     x *= 10;
 
     Function<N> func(std::forward<Args>(args)...);

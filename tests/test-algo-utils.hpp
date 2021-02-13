@@ -105,11 +105,11 @@ void status(auto what, auto algo, bool success, auto start, auto end, auto f, au
       << " in " << chrono::duration_cast<chrono::microseconds>(end - start).count() << "us");
 }
 
-#define _SINGLE_TEST(algo,size,function,arg) BOOST_AUTO_TEST_CASE(algo ## _ ## function ## _ ## size) { test_##algo<size, function>(arg); }
+#define _SINGLE_TEST(algo,size,function,...) BOOST_AUTO_TEST_CASE(algo ## _ ## function ## _ ## size) { test_##algo<size, function>(__VA_ARGS__); }
 #define TEST_ALGO(algo)                         \
   _SINGLE_TEST(algo,4,Rosenbrock, 1.)           \
   _SINGLE_TEST(algo,6,Rosenbrock, 1.)           \
   _SINGLE_TEST(algo,8,Rosenbrock, 1.)           \
-  _SINGLE_TEST(algo,4,Quadratic,)               \
-  _SINGLE_TEST(algo,6,Quadratic,)               \
-  _SINGLE_TEST(algo,8,Quadratic,)
+  _SINGLE_TEST(algo,4,Quadratic)               \
+  _SINGLE_TEST(algo,6,Quadratic)               \
+  _SINGLE_TEST(algo,8,Quadratic)
