@@ -2,7 +2,7 @@
 #include <chrono>
 
 template<int N>
-struct Quadratic : mannumopt::VectorSpace<double, N> {
+struct Quadratic {
   MANNUMOPT_EIGEN_TYPEDEFS(double, N);
 
   MatrixS S;
@@ -33,7 +33,7 @@ struct Quadratic : mannumopt::VectorSpace<double, N> {
 };
 
 template<int N>
-struct Rosenbrock : mannumopt::VectorSpace<double, N> {
+struct Rosenbrock {
   MANNUMOPT_EIGEN_TYPEDEFS(double, N);
 
   double a = 100.;

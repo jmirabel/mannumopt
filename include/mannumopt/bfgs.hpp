@@ -21,8 +21,8 @@ struct BFGS : Algo<Scalar,Dim> {
 
   VectorS p, x2;
 
-  template<typename Functor, typename LineSearch>
-  bool minimize(Functor& func, VectorS& x1, LineSearch ls = LineSearch())
+  template<typename Functor, typename IntegrateFunctor, typename LineSearch>
+  bool minimize(Functor& func, IntegrateFunctor integrate, VectorS& x1, LineSearch ls = LineSearch())
   {
     iter = 0;
 
@@ -41,7 +41,7 @@ struct BFGS : Algo<Scalar,Dim> {
 
       p = - fxx_i * fx1.transpose();
       Scalar a = 1.;
-      ls(func, x1, p, f1, fx1, a, x2);
+      ls(func, integrate, x1, p, f1, fx1, a, x2);
 
       x2.swap(x1);
 
@@ -64,6 +64,12 @@ struct BFGS : Algo<Scalar,Dim> {
 
       ++iter;
     }
+  }
+
+  template<typename Functor, typename LineSearch>
+  bool minimize(Functor& func, VectorS& x, LineSearch ls = LineSearch())
+  {
+    return minimize(func, &internal::vector_space_addition<Scalar, Dim>, x, ls); 
   }
 
   void print(size_type iter, Scalar cost, Scalar grad, Scalar step)

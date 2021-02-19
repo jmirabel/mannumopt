@@ -25,8 +25,8 @@ struct NewtonTR : Algo<Scalar,Dim> {
   Scalar eta = 0.1;
   Scalar u_maxstep = 2.;
 
-  template<typename Functor, typename TrustRegion>
-  bool minimize(Functor& func, VectorS& x, TrustRegion tr = TrustRegion())
+  template<typename VectorValuedFunctor, typename IntergrateFunctor, typename TrustRegion>
+  bool minimize(VectorValuedFunctor& func, IntergrateFunctor integrate, VectorS& x, TrustRegion tr = TrustRegion())
   {
     iter = 0;
     Scalar maxstep = u_maxstep / 2;
@@ -46,7 +46,7 @@ struct NewtonTR : Algo<Scalar,Dim> {
       Scalar p_norm;
       tr(fx, fxx, maxstep, p, p_norm);
 
-      func.x_add(xn, x, p);
+      integrate(xn, x, p);
       func.f(xn, fn);
 
       Scalar rho = (fn - f) / (fx.dot(p) + 0.5 * p.dot(fxx * p));
@@ -62,6 +62,12 @@ struct NewtonTR : Algo<Scalar,Dim> {
 
       ++iter;
     }
+  }
+
+  template<typename Functor, typename TrustRegion>
+  bool minimize(Functor& func, VectorS& x, TrustRegion tr = TrustRegion())
+  {
+    return minimize(func, &internal::vector_space_addition<Scalar, Dim>, x, tr); 
   }
 
   void print(size_type iter, Scalar cost, Scalar grad, Scalar maxstep, Scalar step, Scalar rho)
@@ -94,8 +100,8 @@ struct NewtonLS : Algo<Scalar,Dim> {
   Scalar eta = 0.1;
   Scalar u_maxstep = 2.;
 
-  template<typename Functor, typename LineSearch>
-  bool minimize(Functor& func, VectorS& x, LineSearch ls = LineSearch())
+  template<typename VectorValuedFunctor, typename IntergrateFunctor, typename LineSearch, class Decomposition = Eigen::LDLT<Eigen::Matrix<Scalar, Dim, Dim>> >
+  bool minimize(VectorValuedFunctor& func, IntergrateFunctor integrate, VectorS& x, LineSearch ls = LineSearch())
   {
     iter = 0;
     Scalar maxstep = u_maxstep / 2;
@@ -116,7 +122,7 @@ struct NewtonLS : Algo<Scalar,Dim> {
 
       p = ldlt.compute(fxx).solve(- fx.transpose());
       Scalar a = 1.;
-      ls(func, x, p, f, fx, a, xn);
+      ls(func, integrate, x, p, f, fx, a, xn);
 
       xn.swap(x);
 
@@ -125,6 +131,12 @@ struct NewtonLS : Algo<Scalar,Dim> {
 
       ++iter;
     }
+  }
+
+  template<typename Functor, typename LineSearch>
+  bool minimize(Functor& func, VectorS& x, LineSearch ls = LineSearch())
+  {
+    return minimize(func, &internal::vector_space_addition<Scalar, Dim>, x, ls); 
   }
 
   void print(size_type iter, Scalar cost, Scalar grad, Scalar step)

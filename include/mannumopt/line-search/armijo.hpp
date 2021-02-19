@@ -11,8 +11,8 @@ Scalar r = 0.5;
 Scalar c = 0.1;
 Scalar amin = 1e-8;
 
-template<typename Functor>
-void operator() (Functor& func,
+template<typename Functor, typename IntegrateFunctor>
+void operator() (Functor& func, IntegrateFunctor integrate,
     const VectorS& x, const VectorS& p, Scalar f, const RowVectorS& fx,
     Scalar& a, VectorS& x2)
 {
@@ -21,7 +21,7 @@ void operator() (Functor& func,
     throw std::runtime_error("Not a valid descent direction");
   Scalar f2;
   while(true) {
-    func.x_add(x2, x, a*p);
+    integrate(x2, x, a*p);
     func.f(x2, f2);
     if (f2 < f + c * a * m) break;
     a *= r;
@@ -42,8 +42,8 @@ Scalar c1 = 0.1;
 Scalar c2 = 0.9;
 Scalar amin = 1e-8;
 
-template<typename Functor>
-void operator() (Functor& func,
+template<typename Functor, typename IntegrateFunctor>
+void operator() (Functor& func, IntegrateFunctor integrate,
     const VectorS& x, const VectorS& p, Scalar f, const RowVectorS& fx,
     Scalar& a, VectorS& x2)
 {
@@ -58,7 +58,7 @@ void operator() (Functor& func,
 
   a = 1.;
   while(true) {
-    func.x_add(x2, x, a*p);
+    integrate(x2, x, a*p);
     func.f_fx(x2, f2, fx2);
     if (f2 > f + c1 * a * m) {
       beta = a;
