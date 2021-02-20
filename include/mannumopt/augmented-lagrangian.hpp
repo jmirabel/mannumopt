@@ -1,8 +1,5 @@
 #pragma once
 
-#include <vector>
-#include <memory>
-
 #include <mannumopt/fwd.hpp>
 
 namespace mannumopt {
@@ -11,8 +8,10 @@ template<typename Scalar, int Dim>
 struct AugmentedLagrangian : Algo<Scalar,Dim> {
   MANNUMOPT_EIGEN_TYPEDEFS(Scalar, Dim);
 
+  Scalar etol2;
   using Algo<Scalar,Dim>::fxtol2;
   using Algo<Scalar,Dim>::maxIter;
+  using Algo<Scalar,Dim>::iter;
 
   template <typename CFunctor, typename EFunctor>
   struct AL {
@@ -20,14 +19,27 @@ struct AugmentedLagrangian : Algo<Scalar,Dim> {
     EFunctor& E;
 
     Scalar mu;
-    VectorS lambda = VectorS::Zero();
+    typedef typename EFunctor::Vector VectorE;
+    typedef typename EFunctor::Matrix MatrixE;
+
+    VectorE lambda = VectorE::Zero();
 
     // Temp datas
+    double c;
     RowVectorS cx;
-    VectorS e;
-    MatrixS ex;
+    VectorE e;
+    MatrixE ex;
 
-    AL (CFunctor& C, EFunctor& E, Scalar mu0 = 1000) : C(C), E(E), mu(mu0) {}
+    AL (CFunctor& C, EFunctor& E, Scalar mu0) : C(C), E(E), mu(mu0) {}
+
+    void f(const VectorS& X, double& f)
+    {
+      C.f(X, c);
+      E.f(X, e);
+
+      //f = c - lambda.dot(e) + mu * e.squaredNorm() / 2;
+      f = c + (- lambda + 0.5 * mu * e).dot(e);
+    }
 
     void f_fx(const VectorS& X, double& f, RowVectorS& fx)
     {
@@ -38,16 +50,9 @@ struct AugmentedLagrangian : Algo<Scalar,Dim> {
       f = c + (- lambda + 0.5 * mu * e).dot(e);
       fx.noalias() = cx + (- lambda.transpose() + mu * e.transpose()) * ex;
     }
-
-    void update(const VectorS& X)
-    {
-      C.f(X, c);
-      lamda.noalias() -= mu * c;
-      mu *= 5;
-    }
   };
 
-  Scalar mu0 = 1000;
+  Scalar mu0 = 1e-3;
 
   MatrixS fxx;
 
@@ -55,60 +60,71 @@ struct AugmentedLagrangian : Algo<Scalar,Dim> {
 
   VectorS p, x2;
 
-  template<typename CFunctor, typename EFunctor, typename InnerAlgo, typename InnerLineSearch>
-  bool minimize(CFunctor& C, EFunctor& E, VectorS& x1, InnerAlgo& ialgo = InnerAlgo(), InnerLineSearch ils = InnerLineSearch())
+  template<typename CFunctor, typename EFunctor, typename IntegrateFunctor, typename InnerAlgo, typename InnerLineSearch>
+  bool minimize(CFunctor& C, EFunctor& E, IntegrateFunctor integrate, VectorS& x1, InnerAlgo& ialgo = InnerAlgo(), InnerLineSearch ils = InnerLineSearch())
   {
-    size_type iter = 0;
+    iter = 0;
 
     AL<CFunctor, EFunctor> al (C, E, mu0);
 
-    Scalar f1, f2;
-    func.f_fx(x1, f2, fx2);
-    VectorS x2;
+    VectorS x2 (x1);
 
-    while(true) {
-      x2 = x1;
-      bool success = ialgo.minimize(al, x2, ils);
+    E.f(x1, al.e);
+    Scalar feas = al.e.squaredNorm(), prevfeas = feas;
+
+    while(al.mu < 1e10 && iter < maxIter) {
+      // Compute tolerance for sub-problem.
+      bool reached_desired_fxtol = (feas < 10*etol2);
+      if (reached_desired_fxtol)
+        ialgo.fxtol2 = fxtol2;
+      else
+        ialgo.fxtol2 = fxtol2 * std::sqrt(feas / (10*etol2));
+
+      bool success = ialgo.minimize(al, integrate, x2, ils);
       if (success) {
-        E.f(x2, al.e);
-        if (al.e.squaredNorm() < etol2) {
-        }
         x1 = x2;
-        lamda.noalias() -= mu * c;
-        mu *= 5;
-      } else
-        al.mu = 5 * al.mu;
 
-      f1 = f2;
-      fx1.swap(fx2);
+        E.f(x1, al.e);
+        feas = al.e.squaredNorm();
 
-      // Check termination criterion
-      if (fx1.squaredNorm() < fxtol2)
-        return true;
-      if (iter > maxIter)
-        return false;
+        // Check the KKT condition:
+        // optimality: cx - lambda^T * ex = 0 => ensured by the inner algorithm.
+        // feasibility: e = 0
+        if (reached_desired_fxtol && feas < etol2)
+          return true;
+        al.lambda.noalias() -= al.mu * al.e;
+        if (feas > prevfeas / 2)
+          al.mu *= 25;
+        else
+          al.mu *= 5;
+        prevfeas = feas;
+      } else {
+        al.mu *= 5;
+        x2 = x1;
+        std::cout << "ialgo failed\n";
+      }
 
-      p = - fxx * fx1.transpose();
-      Scalar a = 1.;
-      ls(func, x1, p, f1, fx1, a, x2);
-
-      x2.swap(x1);
-
-      func.f_fx(x1, f2, fx2);
-      VectorS y = fx2 - fx1;
-      // s = a * p
-      // rho = 1 / (y^T s)
-      // rho_a = rho * a = 1 / (y^T p)
-      Scalar rho_a = 1 / y.dot(p);
-
-      //      H = (I - rho s y^T) H (I - rho y s^T) + rho s s^T
-      // i.e. H = (I - rho_a p y^T) H (I - rho_a y p^T) + rho_a a p p^T
-      auto I = MatrixS::Identity();
-      fxx = (I - rho_a * p * y.transpose()) * fxx * (I - rho_a * y * p.transpose());
-      fxx.noalias() += rho_a * a * p * p.transpose();
+      if (this->verbose()) {
+        C.f_fx(x1, al.c, al.cx);
+        E.f_fx(x1, al.e, al.ex);
+      }
+      this->print(ialgo.verbose() || iter%10 == 0,
+          "iter", iter,
+          "cost", al.c,
+          "feas", al.e.squaredNorm(),
+          "optim", (al.cx - al.lambda.transpose()*al.ex).squaredNorm(),
+          "inner_its", ialgo.iter,
+          "mu", al.mu);
 
       ++iter;
     }
+    return false;
+  }
+
+  template<typename CFunctor, typename EFunctor, typename InnerAlgo, typename InnerLineSearch>
+  bool minimize(CFunctor& C, EFunctor& E, VectorS& x1, InnerAlgo& ialgo = InnerAlgo(), InnerLineSearch ils = InnerLineSearch())
+  {
+    return minimize(C, E, &internal::vector_space_addition<Scalar, Dim>, x1, ialgo, ils);
   }
 
 };
