@@ -59,8 +59,7 @@ struct BFGS : Algo<Scalar,Dim> {
       fxx_i = (C * fxx_i * C.transpose()).eval();
       fxx_i.noalias() += rho_a * a * p * p.transpose();
 
-      if (this->verbose)
-        print(iter, f1, fx1.norm(), a);
+      this->print(iter%10==0, "iter", iter, "cost", f1, "grad", fx1.norm(), "step", a);
 
       ++iter;
     }
@@ -70,17 +69,6 @@ struct BFGS : Algo<Scalar,Dim> {
   bool minimize(Functor& func, VectorS& x, LineSearch ls = LineSearch())
   {
     return minimize(func, &internal::vector_space_addition<Scalar, Dim>, x, ls); 
-  }
-
-  void print(size_type iter, Scalar cost, Scalar grad, Scalar step)
-  {
-    if (iter % 10 == 0)
-      std::cout << "iter \t cost \t      grad \t step \t feas\n";
-
-    std::cout << std::setw(4) << iter << "  ";
-    std::cout << std::scientific << std::setprecision(5) << cost << "  ";
-    std::cout << grad << "  ";
-    std::cout << std::fixed << std::setprecision(4) << step << '\n';
   }
 };
 

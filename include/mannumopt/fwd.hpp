@@ -2,6 +2,8 @@
 
 #include <Eigen/Core>
 
+#include <mannumopt/print.hpp>
+
 #define MANNUMOPT_EIGEN_TYPEDEFS(Scalar,Dim)        \
   typedef Eigen::Matrix<Scalar, Dim, Dim> MatrixS;  \
   typedef Eigen::Matrix<Scalar, Dim, 1> VectorS;    \
@@ -10,13 +12,6 @@
 namespace mannumopt {
 
 typedef int size_type;
-
-template<typename Scalar, int Dim>
-struct VectorSpace {
-  MANNUMOPT_EIGEN_TYPEDEFS(Scalar,Dim);
-
-  void x_add(VectorS& x2, const VectorS& x, const VectorS& v) { x2 = x + v; }
-};
 
 namespace internal
 {
@@ -37,8 +32,16 @@ struct Algo {
 
   Scalar xtol, fxtol2;
   size_type maxIter = 200;
-  bool verbose = false;
+  std::ostream* cout = nullptr;
 
   size_type iter;
+
+  inline bool verbose() { return (cout != nullptr); }
+
+  template <typename ...Args>
+  inline void print(bool print_headers, const Args&... args)
+  {
+    if (verbose()) mannumopt::print(*cout, print_headers, args...);
+  }
 };
 }

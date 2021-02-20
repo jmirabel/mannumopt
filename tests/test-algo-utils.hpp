@@ -5,31 +5,33 @@ template<int N>
 struct Quadratic {
   MANNUMOPT_EIGEN_TYPEDEFS(double, N);
 
-  MatrixS S;
+  MatrixS A;
+  VectorS B;
+  double c = 0;
 
   void f(const VectorS& X, double& f)
   {
-    f = 0.5 * X.transpose() * S * X;
+    f = 0.5 * X.transpose() * A * X + B.dot(X) + c;
   }
 
   void f_fx(const VectorS& X, double& f, RowVectorS& fx)
   {
     this->f(X, f);
-    fx = X.transpose() * S;
+    fx = X.transpose() * A + B.transpose();
   }
 
   void f_fx_fxx(const VectorS& X, double& f, RowVectorS& fx, MatrixS& fxx)
   {
     f_fx(X, f, fx);
-    fxx = S;
+    fxx = A;
   }
 
-  Quadratic() : S(MatrixS::Zero()) {
+  Quadratic() : A(MatrixS::Zero()), B(VectorS::Zero()) {
     for (int i = 0; i < N; ++i)
-      S(i,i) = i+1;
+      A(i,i) = i+1;
   }
-  Quadratic(VectorS d) : S(d.asDiagonal()) {}
-  Quadratic(MatrixS S) : S(S) {}
+  Quadratic(VectorS d) : A(d.asDiagonal()), B(VectorS::Zero()) {}
+  Quadratic(MatrixS A) : A(A), B(VectorS::Zero()) {}
 };
 
 template<int N>

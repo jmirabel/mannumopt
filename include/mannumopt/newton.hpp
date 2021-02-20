@@ -25,8 +25,8 @@ struct NewtonTR : Algo<Scalar,Dim> {
   Scalar eta = 0.1;
   Scalar u_maxstep = 2.;
 
-  template<typename VectorValuedFunctor, typename IntergrateFunctor, typename TrustRegion>
-  bool minimize(VectorValuedFunctor& func, IntergrateFunctor integrate, VectorS& x, TrustRegion tr = TrustRegion())
+  template<typename VectorValuedFunctor, typename IntegrateFunctor, typename TrustRegion>
+  bool minimize(VectorValuedFunctor& func, IntegrateFunctor integrate, VectorS& x, TrustRegion tr = TrustRegion())
   {
     iter = 0;
     Scalar maxstep = u_maxstep / 2;
@@ -52,8 +52,9 @@ struct NewtonTR : Algo<Scalar,Dim> {
       Scalar rho = (fn - f) / (fx.dot(p) + 0.5 * p.dot(fxx * p));
       if (rho > eta) x.swap(xn);
 
-      if (this->verbose)
-        print(iter, f, fx.norm(), maxstep, p_norm, rho);
+      this->print(iter % 10 == 0,
+          "iter", iter, "cost", f, "grad", fx.norm(),
+          "maxstep", maxstep, "step", p_norm, "rho", rho);
 
       if (rho < 0.25)
         maxstep *= 0.25;
@@ -68,18 +69,6 @@ struct NewtonTR : Algo<Scalar,Dim> {
   bool minimize(Functor& func, VectorS& x, TrustRegion tr = TrustRegion())
   {
     return minimize(func, &internal::vector_space_addition<Scalar, Dim>, x, tr); 
-  }
-
-  void print(size_type iter, Scalar cost, Scalar grad, Scalar maxstep, Scalar step, Scalar rho)
-  {
-    if (iter % 10 == 0)
-      std::cout << "iter \t cost \t grad \t maxstep \t step \t rho\n";
-
-    std::cout << std::setw(4) << iter << "  ";
-    std::cout << std::scientific << std::setprecision(5) << cost << "  ";
-    std::cout << grad << "  ";
-    std::cout << std::fixed << std::setprecision(4)
-      << maxstep << "  " << step << "  " << rho << '\n';
   }
 };
 
@@ -100,8 +89,8 @@ struct NewtonLS : Algo<Scalar,Dim> {
   Scalar eta = 0.1;
   Scalar u_maxstep = 2.;
 
-  template<typename VectorValuedFunctor, typename IntergrateFunctor, typename LineSearch, class Decomposition = Eigen::LDLT<Eigen::Matrix<Scalar, Dim, Dim>> >
-  bool minimize(VectorValuedFunctor& func, IntergrateFunctor integrate, VectorS& x, LineSearch ls = LineSearch())
+  template<typename VectorValuedFunctor, typename IntegrateFunctor, typename LineSearch, class Decomposition = Eigen::LDLT<Eigen::Matrix<Scalar, Dim, Dim>> >
+  bool minimize(VectorValuedFunctor& func, IntegrateFunctor integrate, VectorS& x, LineSearch ls = LineSearch())
   {
     iter = 0;
     Scalar maxstep = u_maxstep / 2;
@@ -126,8 +115,8 @@ struct NewtonLS : Algo<Scalar,Dim> {
 
       xn.swap(x);
 
-      if (this->verbose)
-        print(iter, f, fx.norm(), a);
+      this->print(iter % 10 == 0,
+          "iter", iter, "cost", f, "grad", fx.norm(), "step", a);
 
       ++iter;
     }
@@ -137,17 +126,6 @@ struct NewtonLS : Algo<Scalar,Dim> {
   bool minimize(Functor& func, VectorS& x, LineSearch ls = LineSearch())
   {
     return minimize(func, &internal::vector_space_addition<Scalar, Dim>, x, ls); 
-  }
-
-  void print(size_type iter, Scalar cost, Scalar grad, Scalar step)
-  {
-    if (iter % 10 == 0)
-      std::cout << "iter \t cost \t      grad \t step\n";
-
-    std::cout << std::setw(4) << iter << "  ";
-    std::cout << std::scientific << std::setprecision(5) << cost << "  ";
-    std::cout << grad << "  ";
-    std::cout << std::fixed << std::setprecision(4) << step << '\n';
   }
 };
 
