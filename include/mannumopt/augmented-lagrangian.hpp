@@ -31,7 +31,7 @@ struct AugmentedLagrangian : Algo<Scalar,XDim,TDim> {
     VectorE e;
     MatrixET ex;
 
-    AL (CFunctor& C, EFunctor& E, VectorE& lambda, Scalar& mu0, auto tdim)
+    AL (CFunctor& C, EFunctor& E, VectorE& lambda, Scalar& mu, auto tdim)
       : C(C), E(E), lambda(lambda), mu(mu),
       cx(tdim), e(lambda.size()), ex(lambda.size(), tdim)
     {}
