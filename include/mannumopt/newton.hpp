@@ -8,31 +8,37 @@
 
 namespace mannumopt {
 
-template<typename Scalar, int Dim>
-struct NewtonTR : Algo<Scalar,Dim> {
-  MANNUMOPT_EIGEN_TYPEDEFS(Scalar, Dim);
+template<typename Scalar, int XDim, int TDim = XDim>
+struct NewtonTR : Algo<Scalar,XDim,TDim> {
+  MANNUMOPT_ALGO_TYPEDEFS(Scalar, XDim, TDim);
 
-  using Algo<Scalar,Dim>::fxtol2;
-  using Algo<Scalar,Dim>::maxIter;
-  using Algo<Scalar,Dim>::iter;
+  using AlgoBase::fxtol2;
+  using AlgoBase::maxIter;
+  using AlgoBase::iter;
 
-  MatrixS fxx;
+  MatrixTT fxx;
 
-  RowVectorS fx;
-
-  VectorS p, x2;
+  RowVectorT fx;
+  VectorT p;
+  VectorX xn;
 
   Scalar eta = 0.1;
   Scalar u_maxstep = 2.;
 
+  NewtonTR(int xdim = XDim, int tdim = TDim) :
+    fxx(tdim,tdim),
+    fx(tdim),
+    p(tdim),
+    xn(xdim)
+  {}
+
   template<typename VectorValuedFunctor, typename IntegrateFunctor, typename TrustRegion>
-  bool minimize(VectorValuedFunctor& func, IntegrateFunctor integrate, VectorS& x, TrustRegion tr = TrustRegion())
+  bool minimize(VectorValuedFunctor& func, IntegrateFunctor integrate, VectorX& x, TrustRegion tr = TrustRegion())
   {
     iter = 0;
     Scalar maxstep = u_maxstep / 2;
 
     Scalar f, fn;
-    VectorS xn;
 
     while(true) {
       func.f_fx_fxx(x, f, fx, fxx);
@@ -66,39 +72,47 @@ struct NewtonTR : Algo<Scalar,Dim> {
   }
 
   template<typename Functor, typename TrustRegion>
-  bool minimize(Functor& func, VectorS& x, TrustRegion tr = TrustRegion())
+  bool minimize(Functor& func, VectorX& x, TrustRegion tr = TrustRegion())
   {
-    return minimize(func, &internal::vector_space_addition<Scalar, Dim>, x, tr); 
+    static_assert(XDim == TDim, "Variable space and tangent space must have the same dimension");
+    return minimize(func, &internal::vector_space_addition<Scalar, XDim>, x, tr); 
   }
 };
 
-template<typename Scalar, int Dim>
-struct NewtonLS : Algo<Scalar,Dim> {
-  MANNUMOPT_EIGEN_TYPEDEFS(Scalar, Dim);
+template<typename Scalar, int XDim, int TDim = XDim>
+struct NewtonLS : Algo<Scalar,XDim,TDim> {
+  MANNUMOPT_ALGO_TYPEDEFS(Scalar, XDim, TDim);
 
-  using Algo<Scalar,Dim>::fxtol2;
-  using Algo<Scalar,Dim>::maxIter;
-  using Algo<Scalar,Dim>::iter;
+  using AlgoBase::fxtol2;
+  using AlgoBase::maxIter;
+  using AlgoBase::iter;
 
-  MatrixS fxx;
+  MatrixTT fxx;
 
-  RowVectorS fx;
+  RowVectorT fx;
 
-  VectorS p, x2;
+  VectorT p;
+  VectorX xn;
 
   Scalar eta = 0.1;
   Scalar u_maxstep = 2.;
 
-  template<typename VectorValuedFunctor, typename IntegrateFunctor, typename LineSearch, class Decomposition = Eigen::LDLT<Eigen::Matrix<Scalar, Dim, Dim>> >
-  bool minimize(VectorValuedFunctor& func, IntegrateFunctor integrate, VectorS& x, LineSearch ls = LineSearch())
+  NewtonLS(int xdim = XDim, int tdim = TDim) :
+    fxx(tdim,tdim),
+    fx(tdim),
+    p(tdim),
+    xn(xdim)
+  {}
+
+  template<typename VectorValuedFunctor, typename IntegrateFunctor, typename LineSearch, class Decomposition = ApproxLDLT<MatrixTT> >
+  bool minimize(VectorValuedFunctor& func, IntegrateFunctor integrate, VectorX& x, LineSearch ls = LineSearch())
   {
     iter = 0;
     Scalar maxstep = u_maxstep / 2;
 
     Scalar f;
-    VectorS xn;
 
-    ApproxLDLT<MatrixS> ldlt;
+    Decomposition dec(fxx.rows());
 
     while(true) {
       func.f_fx_fxx(x, f, fx, fxx);
@@ -109,7 +123,7 @@ struct NewtonLS : Algo<Scalar,Dim> {
       if (iter > maxIter)
         return false;
 
-      p = ldlt.compute(fxx).solve(- fx.transpose());
+      p = dec.compute(fxx).solve(- fx.transpose());
       Scalar a = 1.;
       ls(func, integrate, x, p, f, fx, a, xn);
 
@@ -122,10 +136,12 @@ struct NewtonLS : Algo<Scalar,Dim> {
     }
   }
 
-  template<typename Functor, typename LineSearch>
-  bool minimize(Functor& func, VectorS& x, LineSearch ls = LineSearch())
+  template<typename Functor, typename LineSearch, class Decomposition = ApproxLDLT<MatrixTT> >
+  bool minimize(Functor& func, VectorX& x, LineSearch ls = LineSearch())
   {
-    return minimize(func, &internal::vector_space_addition<Scalar, Dim>, x, ls); 
+    static_assert(XDim == TDim, "Variable space and tangent space must have the same dimension");
+    auto integrate = &internal::vector_space_addition<Scalar, XDim>;
+    return minimize<Functor, decltype(integrate), LineSearch, Decomposition>(func, integrate, x, ls); 
   }
 };
 

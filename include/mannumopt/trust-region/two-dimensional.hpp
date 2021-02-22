@@ -45,7 +45,7 @@ void find_root_of_polynom(
 
 template<typename Scalar, int Dim>
 struct TwoDimensional {
-MANNUMOPT_EIGEN_TYPEDEFS(Scalar, Dim);
+MANNUMOPT_EIGEN_TYPEDEFS(Scalar, Dim, S);
 
 ApproxLDLT<MatrixS> ldlt;
 

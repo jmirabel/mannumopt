@@ -7,7 +7,7 @@
 namespace mannumopt::trustRegion {
 template<typename Scalar, int Dim>
 struct Cauchy {
-MANNUMOPT_EIGEN_TYPEDEFS(Scalar, Dim);
+MANNUMOPT_EIGEN_TYPEDEFS(Scalar, Dim, S);
 
 void operator() (const RowVectorS& fx, const MatrixS& fxx,
     Scalar delta, VectorS& p, Scalar& p_norm)

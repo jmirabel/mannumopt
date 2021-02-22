@@ -7,22 +7,31 @@
 
 namespace mannumopt {
 
-template<typename Scalar, int Dim>
-struct BFGS : Algo<Scalar,Dim> {
-  MANNUMOPT_EIGEN_TYPEDEFS(Scalar, Dim);
+template<typename Scalar, int XDim, int TDim = XDim>
+struct BFGS : Algo<Scalar,XDim,TDim> {
+  MANNUMOPT_ALGO_TYPEDEFS(Scalar, XDim, TDim);
 
-  using Algo<Scalar,Dim>::fxtol2;
-  using Algo<Scalar,Dim>::maxIter;
-  using Algo<Scalar,Dim>::iter;
+  using AlgoBase::fxtol2;
+  using AlgoBase::maxIter;
+  using AlgoBase::iter;
 
-  MatrixS fxx_i;
+  MatrixTT fxx_i, C;
 
-  RowVectorS fx1, fx2;
+  RowVectorT fx1, fx2;
+  VectorT p;
+  VectorX x2;
 
-  VectorS p, x2;
+  BFGS(int xdim = XDim, int tdim = TDim) :
+    fxx_i(tdim, tdim),
+    C(tdim, tdim),
+    fx1(tdim),
+    fx2(tdim),
+    p(tdim),
+    x2(xdim)
+  {}
 
   template<typename Functor, typename IntegrateFunctor, typename LineSearch>
-  bool minimize(Functor& func, IntegrateFunctor integrate, VectorS& x1, LineSearch ls = LineSearch())
+  bool minimize(Functor& func, IntegrateFunctor integrate, VectorX& x1, LineSearch ls = LineSearch())
   {
     iter = 0;
 
@@ -46,7 +55,7 @@ struct BFGS : Algo<Scalar,Dim> {
       x2.swap(x1);
 
       func.f_fx(x1, f2, fx2);
-      VectorS y = fx2 - fx1;
+      VectorT y = fx2 - fx1;
       // s = a * p
       // rho = 1 / (y^T s)
       // rho_a = rho * a = 1 / (y^T p)
@@ -54,8 +63,8 @@ struct BFGS : Algo<Scalar,Dim> {
 
       //      H = (I - rho s y^T) H (I - rho y s^T) + rho s s^T
       // i.e. H = (I - rho_a p y^T) H (I - rho_a y p^T) + rho_a a p p^T
-      auto I = MatrixS::Identity();
-      MatrixS C (I - rho_a *p * y.transpose());
+      auto I = MatrixTT::Identity(fxx_i.rows(), fxx_i.cols());
+      C.noalias() = (I - rho_a *p * y.transpose());
       fxx_i = (C * fxx_i * C.transpose()).eval();
       fxx_i.noalias() += rho_a * a * p * p.transpose();
 
@@ -66,9 +75,10 @@ struct BFGS : Algo<Scalar,Dim> {
   }
 
   template<typename Functor, typename LineSearch>
-  bool minimize(Functor& func, VectorS& x, LineSearch ls = LineSearch())
+  bool minimize(Functor& func, VectorX& x, LineSearch ls = LineSearch())
   {
-    return minimize(func, &internal::vector_space_addition<Scalar, Dim>, x, ls); 
+    static_assert(XDim == TDim, "Variable space and tangent space must have the same dimension");
+    return minimize(func, &internal::vector_space_addition<Scalar, XDim>, x, ls); 
   }
 };
 

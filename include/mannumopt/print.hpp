@@ -7,17 +7,9 @@ namespace mannumopt {
 
 namespace internal {
 
-template <typename ValueType>
-inline void hprint(std::ostream& os, const char* header, const ValueType&)
-{
-  os << std::setfill(' ') << std::setw(12) << header << '\n';
-}
+inline void hprint(std::ostream& os) { os << '\n'; }
 
-template <typename ValueType>
-inline void vprint(std::ostream& os, const char*, const ValueType& v)
-{
-  os << std::setprecision(5) << std::setw(12) << v << '\n';
-}
+inline void vprint(std::ostream& os) { os << '\n'; }
 
 template <typename ValueType, typename ...Args>
 inline void hprint(std::ostream& os, const char* header, const ValueType&, const Args&... args)

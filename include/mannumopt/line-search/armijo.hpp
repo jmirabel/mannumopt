@@ -3,9 +3,10 @@
 #include <mannumopt/fwd.hpp>
 
 namespace mannumopt::lineSearch {
-template<typename Scalar, int Dim>
+template<typename Scalar, int XDim, int TDim = XDim>
 struct Armijo {
-MANNUMOPT_EIGEN_TYPEDEFS(Scalar, Dim);
+MANNUMOPT_EIGEN_TYPEDEFS(Scalar, XDim, X);
+MANNUMOPT_EIGEN_TYPEDEFS(Scalar, TDim, T);
 
 Scalar r = 0.5;
 Scalar c = 0.1;
@@ -13,8 +14,8 @@ Scalar amin = 1e-8;
 
 template<typename Functor, typename IntegrateFunctor>
 void operator() (Functor& func, IntegrateFunctor integrate,
-    const VectorS& x, const VectorS& p, Scalar f, const RowVectorS& fx,
-    Scalar& a, VectorS& x2)
+    const VectorX& x, const VectorT& p, Scalar f, const RowVectorT& fx,
+    Scalar& a, VectorX& x2)
 {
   Scalar m = fx * p;
   if (m >= 0)
@@ -33,9 +34,10 @@ void operator() (Functor& func, IntegrateFunctor integrate,
 
 /// The algorithm comes from
 /// https://sites.math.washington.edu/~burke/crs/408/notes/nlp/line.pdf
-template<typename Scalar, int Dim>
+template<typename Scalar, int XDim, int TDim = XDim>
 struct BisectionWeakWolfe {
-MANNUMOPT_EIGEN_TYPEDEFS(Scalar, Dim);
+MANNUMOPT_EIGEN_TYPEDEFS(Scalar, XDim, X);
+MANNUMOPT_EIGEN_TYPEDEFS(Scalar, TDim, T);
 
 Scalar r = 0.5;
 Scalar c1 = 0.1;
@@ -44,19 +46,20 @@ Scalar amin = 1e-8;
 
 template<typename Functor, typename IntegrateFunctor>
 void operator() (Functor& func, IntegrateFunctor integrate,
-    const VectorS& x, const VectorS& p, Scalar f, const RowVectorS& fx,
-    Scalar& a, VectorS& x2)
+    const VectorX& x, const VectorT& p, Scalar f, const RowVectorT& fx,
+    Scalar& a, VectorX& x2)
 {
   Scalar m = fx * p;
   if (m >= 0)
     throw std::runtime_error("Not a valid descent direction");
 
   Scalar f2;
-  RowVectorS fx2;
+  RowVectorT fx2(fx.size());
   Scalar alpha = 0.;
   Scalar beta = -1.;
 
   a = 1.;
+  int iter = 1000;
   while(true) {
     integrate(x2, x, a*p);
     func.f_fx(x2, f2, fx2);
@@ -71,6 +74,9 @@ void operator() (Functor& func, IntegrateFunctor integrate,
         a = 0.5 * (alpha + beta);
     } else
       break;
+    iter--;
+    if (iter == 0)
+      throw std::runtime_error("Too many iterations in BisectionWeakWolfe line search");
   }
 }
 };

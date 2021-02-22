@@ -4,10 +4,10 @@
 
 #include <mannumopt/print.hpp>
 
-#define MANNUMOPT_EIGEN_TYPEDEFS(Scalar,Dim)        \
-  typedef Eigen::Matrix<Scalar, Dim, Dim> MatrixS;  \
-  typedef Eigen::Matrix<Scalar, Dim, 1> VectorS;    \
-  typedef Eigen::Matrix<Scalar, 1, Dim> RowVectorS
+#define MANNUMOPT_EIGEN_TYPEDEFS(Scalar,Dim,Suffix)        \
+  typedef Eigen::Matrix<Scalar, Dim, Dim> Matrix##Suffix;  \
+  typedef Eigen::Matrix<Scalar, Dim, 1> Vector##Suffix;    \
+  typedef Eigen::Matrix<Scalar, 1, Dim> RowVector##Suffix
 
 namespace mannumopt {
 
@@ -26,9 +26,14 @@ namespace internal
   }
 }
 
-template<typename Scalar, int Dim>
+template<typename Scalar, int XDim, int TDim = XDim>
 struct Algo {
-  MANNUMOPT_EIGEN_TYPEDEFS(Scalar, Dim);
+  typedef Eigen::Matrix<Scalar, TDim, TDim> MatrixTT;
+  typedef Eigen::Matrix<Scalar, TDim, 1> VectorT;
+  typedef Eigen::Matrix<Scalar, 1, TDim> RowVectorT;
+
+  typedef Eigen::Matrix<Scalar, XDim, 1> VectorX;
+  typedef Eigen::Matrix<Scalar, 1, XDim> RowVectorX;
 
   Scalar xtol, fxtol2;
   size_type maxIter = 200;
@@ -44,4 +49,12 @@ struct Algo {
     if (verbose()) mannumopt::print(*cout, print_headers, args...);
   }
 };
+
+#define MANNUMOPT_ALGO_TYPEDEFS(Scalar,XDim,TDim)    \
+  typedef Algo<Scalar, XDim, TDim> AlgoBase;         \
+  typedef typename AlgoBase::MatrixTT   MatrixTT;    \
+  typedef typename AlgoBase::VectorT    VectorT;     \
+  typedef typename AlgoBase::RowVectorT RowVectorT;  \
+  typedef typename AlgoBase::VectorX    VectorX;     \
+  typedef typename AlgoBase::RowVectorX RowVectorX
 }

@@ -4,35 +4,39 @@
 
 namespace mannumopt {
 
-template<typename Scalar, int Dim>
-struct AugmentedLagrangian : Algo<Scalar,Dim> {
-  MANNUMOPT_EIGEN_TYPEDEFS(Scalar, Dim);
+template<typename Scalar, int XDim, int TDim, int ECDim>
+struct AugmentedLagrangian : Algo<Scalar,XDim,TDim> {
+  MANNUMOPT_ALGO_TYPEDEFS(Scalar, XDim, TDim);
+
+  typedef Eigen::Matrix<Scalar, ECDim, 1> VectorE;
+  typedef Eigen::Matrix<Scalar, ECDim, TDim> MatrixET;
 
   Scalar etol2;
-  using Algo<Scalar,Dim>::fxtol2;
-  using Algo<Scalar,Dim>::maxIter;
-  using Algo<Scalar,Dim>::iter;
+  using AlgoBase::fxtol2;
+  using AlgoBase::maxIter;
+  using AlgoBase::iter;
 
   template <typename CFunctor, typename EFunctor>
   struct AL {
     CFunctor& C;
     EFunctor& E;
 
-    Scalar mu;
-    typedef typename EFunctor::Vector VectorE;
-    typedef typename EFunctor::Matrix MatrixE;
+    const VectorE& lambda;
 
-    VectorE lambda = VectorE::Zero();
+    const Scalar& mu;
 
     // Temp datas
     double c;
-    RowVectorS cx;
+    RowVectorT cx;
     VectorE e;
-    MatrixE ex;
+    MatrixET ex;
 
-    AL (CFunctor& C, EFunctor& E, Scalar mu0) : C(C), E(E), mu(mu0) {}
+    AL (CFunctor& C, EFunctor& E, VectorE& lambda, Scalar& mu0, auto tdim)
+      : C(C), E(E), lambda(lambda), mu(mu),
+      cx(tdim), e(lambda.size()), ex(lambda.size(), tdim)
+    {}
 
-    void f(const VectorS& X, double& f)
+    void f(const VectorX& X, double& f)
     {
       C.f(X, c);
       E.f(X, e);
@@ -41,7 +45,7 @@ struct AugmentedLagrangian : Algo<Scalar,Dim> {
       f = c + (- lambda + 0.5 * mu * e).dot(e);
     }
 
-    void f_fx(const VectorS& X, double& f, RowVectorS& fx)
+    void f_fx(const VectorX& X, double& f, RowVectorT& fx)
     {
       C.f_fx(X, c, cx);
       E.f_fx(X, e, ex);
@@ -52,27 +56,29 @@ struct AugmentedLagrangian : Algo<Scalar,Dim> {
     }
   };
 
-  Scalar mu0 = 1e-3;
+  int tdim;
 
-  MatrixS fxx;
+  Scalar mu = 1e-3;
 
-  RowVectorS fx1, fx2;
+  VectorE lambda;
+  VectorX x2;
 
-  VectorS p, x2;
+  AugmentedLagrangian(int xdim = XDim, int tdim = TDim, int ecdim = ECDim)
+    : tdim(tdim), lambda(VectorE::Zero(ecdim)), x2(xdim) {}
 
   template<typename CFunctor, typename EFunctor, typename IntegrateFunctor, typename InnerAlgo, typename InnerLineSearch>
-  bool minimize(CFunctor& C, EFunctor& E, IntegrateFunctor integrate, VectorS& x1, InnerAlgo& ialgo = InnerAlgo(), InnerLineSearch ils = InnerLineSearch())
+  bool minimize(CFunctor& C, EFunctor& E, IntegrateFunctor integrate, VectorX& x1, InnerAlgo& ialgo = InnerAlgo(), InnerLineSearch ils = InnerLineSearch())
   {
     iter = 0;
 
-    AL<CFunctor, EFunctor> al (C, E, mu0);
+    AL<CFunctor, EFunctor> al {C, E, lambda, mu, x1.size()};
 
-    VectorS x2 (x1);
+    VectorX x2 (x1);
 
     E.f(x1, al.e);
     Scalar feas = al.e.squaredNorm(), prevfeas = feas;
 
-    while(al.mu < 1e10 && iter < maxIter) {
+    while(mu < 1e10 && iter < maxIter) {
       // Compute tolerance for sub-problem.
       bool reached_desired_fxtol = (feas < 10*etol2);
       if (reached_desired_fxtol)
@@ -92,16 +98,15 @@ struct AugmentedLagrangian : Algo<Scalar,Dim> {
         // feasibility: e = 0
         if (reached_desired_fxtol && feas < etol2)
           return true;
-        al.lambda.noalias() -= al.mu * al.e;
+        lambda.noalias() -= mu * al.e;
         if (feas > prevfeas / 2)
-          al.mu *= 25;
+          mu *= 25;
         else
-          al.mu *= 5;
+          mu *= 5;
         prevfeas = feas;
       } else {
-        al.mu *= 5;
+        mu *= 5;
         x2 = x1;
-        std::cout << "ialgo failed\n";
       }
 
       if (this->verbose()) {
@@ -109,12 +114,13 @@ struct AugmentedLagrangian : Algo<Scalar,Dim> {
         E.f_fx(x1, al.e, al.ex);
       }
       this->print(ialgo.verbose() || iter%10 == 0,
+          "", (success ? ' ' : '!'),
           "iter", iter,
           "cost", al.c,
           "feas", al.e.squaredNorm(),
-          "optim", (al.cx - al.lambda.transpose()*al.ex).squaredNorm(),
+          "optim", (al.cx - lambda.transpose()*al.ex).squaredNorm(),
           "inner_its", ialgo.iter,
-          "mu", al.mu);
+          "mu", mu);
 
       ++iter;
     }
@@ -122,9 +128,10 @@ struct AugmentedLagrangian : Algo<Scalar,Dim> {
   }
 
   template<typename CFunctor, typename EFunctor, typename InnerAlgo, typename InnerLineSearch>
-  bool minimize(CFunctor& C, EFunctor& E, VectorS& x1, InnerAlgo& ialgo = InnerAlgo(), InnerLineSearch ils = InnerLineSearch())
+  bool minimize(CFunctor& C, EFunctor& E, VectorX& x1, InnerAlgo& ialgo = InnerAlgo(), InnerLineSearch ils = InnerLineSearch())
   {
-    return minimize(C, E, &internal::vector_space_addition<Scalar, Dim>, x1, ialgo, ils);
+    static_assert(XDim == TDim, "Variable space and tangent space must have the same dimension");
+    return minimize(C, E, &internal::vector_space_addition<Scalar, XDim>, x1, ialgo, ils);
   }
 
 };
