@@ -103,12 +103,11 @@ struct Statistics {
 };
 std::map<std::string, Statistics> stats;
 
-void status(auto what, auto algo, bool success, auto start, auto end, auto f, auto x)
+void status(auto what, auto algo, bool success, auto start, auto end, auto f, auto x,
+    double v)
 {
   namespace chrono = std::chrono;
 
-  double v;
-  f.f(x,v);
   Statistics& stat = stats[what];
 
   stat.ntotal++;
@@ -122,6 +121,13 @@ void status(auto what, auto algo, bool success, auto start, auto end, auto f, au
       << " in " << chrono::duration_cast<chrono::microseconds>(end - start).count() << "us");
 }
 
+void status(auto what, auto algo, bool success, auto start, auto end, auto f, auto x)
+{
+  double v;
+  f.f(x,v);
+  status(what, algo, success, start, end, f, x, v);
+}
+
 void print_statistics(const char* header = nullptr)
 {
   if (header != NULL) BOOST_TEST_MESSAGE(header);
@@ -129,6 +135,19 @@ void print_statistics(const char* header = nullptr)
     BOOST_TEST_MESSAGE(pair.first
         << ": " << pair.second.nsuccess << " / " << pair.second.ntotal);
   }
+}
+
+int verbosityLevel() {
+  const auto& master_test_suite = boost::unit_test::framework::master_test_suite();
+  static int level = -1;
+  if (level < 0) {
+    level = 0;
+    for (int i = 0; i < master_test_suite.argc; ++i)
+      if (strcmp("--verbose", master_test_suite.argv[i]) == 0
+          || strcmp("-v", master_test_suite.argv[i]) == 0)
+        level++;
+  }
+  return level;
 }
 
 #define _SINGLE_TEST(algo,warn,size,function,...) \

@@ -16,7 +16,8 @@ void newtonTR(const char* type, Function<N> func, typename Function<N>::VectorS 
   mannumopt::NewtonTR<double, N> newton;
   newton.fxtol2 = 1e-12;
   newton.maxIter = 100;
-  //newton.verbose = true;
+  if (verbosityLevel() > 0)
+    newton.cout = &std::cout;
 
   auto start = chrono::steady_clock::now();
   bool res;

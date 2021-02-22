@@ -13,7 +13,8 @@ void bfgs(const char* type, Function<N> func, typename Function<N>::VectorS x)
   mannumopt::BFGS<double, N> bfgs(x.size(), x.size());
   bfgs.fxtol2 = 1e-12;
   bfgs.maxIter = 100;
-  //bfgs.cout = &std::cout;
+  if (verbosityLevel() > 0)
+    bfgs.cout = &std::cout;
 
   bfgs.fxx_i.setIdentity();
   auto start = chrono::steady_clock::now();

@@ -17,11 +17,13 @@ void augmented_lagrangian(const char* type, CostFunction<N> cost,
   al.etol2 = 1e-12;
   al.fxtol2 = 1e-10;
   al.maxIter = 40;
-  //al.cout = &std::cout;
+  if (verbosityLevel() > 0)
+    al.cout = &std::cout;
 
   mannumopt::BFGS<double, N> bfgs;
   bfgs.maxIter = 100;
-  //bfgs.cout = &std::cout;
+  if (verbosityLevel() > 1)
+    bfgs.cout = &std::cout;
 
   bfgs.fxx_i.setIdentity();
   auto start = chrono::steady_clock::now();

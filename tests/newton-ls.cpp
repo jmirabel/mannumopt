@@ -13,7 +13,8 @@ void newtonLS(const char* type, Function<N> func, typename Function<N>::VectorS 
   mannumopt::NewtonLS<double, N> newton;
   newton.fxtol2 = 1e-12;
   newton.maxIter = 100;
-  //newton.cout = &std::cout;
+  if (verbosityLevel() > 0)
+    newton.cout = &std::cout;
 
   auto start = chrono::steady_clock::now();
   bool res;
