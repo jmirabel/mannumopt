@@ -8,12 +8,12 @@
 
 namespace chrono = std::chrono;
 
-template<template<class,int> class LineSearch, int N, template<int> class CostFunction,
+template<template<class,int,int> class LineSearch, int N, template<int> class CostFunction,
   class EConstraint>
 void augmented_lagrangian(const char* type, CostFunction<N> cost,
     EConstraint econstraint, typename CostFunction<N>::VectorS x)
 {
-  mannumopt::AugmentedLagrangian<double, N> al;
+  mannumopt::AugmentedLagrangian<double, N, N, EConstraint::dimension()> al;
   al.etol2 = 1e-12;
   al.fxtol2 = 1e-10;
   al.maxIter = 40;
@@ -27,7 +27,7 @@ void augmented_lagrangian(const char* type, CostFunction<N> cost,
   auto start = chrono::steady_clock::now();
   bool res;
   try {
-    res = al.minimize(cost, econstraint, x, bfgs, LineSearch<double, N>());
+    res = al.minimize(cost, econstraint, x, bfgs, LineSearch<double, N, N>());
   } catch (const std::runtime_error& e) {
     BOOST_TEST_MESSAGE("Caught std::runtime_error: " << e.what());
     res = false;
@@ -38,12 +38,14 @@ void augmented_lagrangian(const char* type, CostFunction<N> cost,
 
 template<typename ScalarFunctor, int N>
 struct ScalarToVector : ScalarFunctor {
-  MANNUMOPT_EIGEN_TYPEDEFS(double, N);
+  MANNUMOPT_EIGEN_TYPEDEFS(double, N, S);
 
   typedef Eigen::Matrix<double, 1, 1> Vector;
   typedef Eigen::Matrix<double, 1, N> Matrix;
 
   using ScalarFunctor::ScalarFunctor;
+
+  static constexpr int dimension() { return 1; }
 
   void f(const VectorS& X, Vector& f)
   {
@@ -77,6 +79,6 @@ template<int N, template<int> class CostFunction, class... Args> void test_augme
 }
 
 //TEST_ALGO(augmented_lagrangian)
-_SINGLE_TEST(augmented_lagrangian,4,Rosenbrock, 1.)
-_SINGLE_TEST(augmented_lagrangian,6,Rosenbrock, 1.)
-_SINGLE_TEST(augmented_lagrangian,8,Rosenbrock, 1.)
+_SINGLE_TEST(augmented_lagrangian,false,4,Rosenbrock, 1.)
+_SINGLE_TEST(augmented_lagrangian,false,6,Rosenbrock, 1.)
+_SINGLE_TEST(augmented_lagrangian,false,8,Rosenbrock, 1.)

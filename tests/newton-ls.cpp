@@ -7,7 +7,7 @@
 
 namespace chrono = std::chrono;
 
-template<template<class,int> class LineSearch, int N, template<int> class Function>
+template<template<class,int,int> class LineSearch, int N, template<int> class Function>
 void newtonLS(const char* type, Function<N> func, typename Function<N>::VectorS x)
 {
   mannumopt::NewtonLS<double, N> newton;
@@ -18,7 +18,7 @@ void newtonLS(const char* type, Function<N> func, typename Function<N>::VectorS 
   auto start = chrono::steady_clock::now();
   bool res;
   try {
-    res = newton.minimize(func, x, LineSearch<double, N>());
+    res = newton.minimize(func, x, LineSearch<double, N, N>());
   } catch (const std::runtime_error& e) {
     BOOST_TEST_MESSAGE("Caught std::runtime_error: " << e.what());
     res = false;
