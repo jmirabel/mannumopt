@@ -15,4 +15,5 @@ target_include_directories(mannumopt INTERFACE
 target_link_libraries(mannumopt INTERFACE Eigen3::Eigen)
 
 enable_testing()
+add_subdirectory(python)
 add_subdirectory(tests)
