@@ -19,7 +19,7 @@ void newtonLS(const char* type, Function<N> func, typename Function<N>::VectorS 
   auto start = chrono::steady_clock::now();
   bool res;
   try {
-    res = newton.minimize(func, x, LineSearch<double, N, N>());
+    res = newton.template minimize<LineSearch<double, N, N>>(func, x);
   } catch (const std::runtime_error& e) {
     BOOST_TEST_MESSAGE("Caught std::runtime_error: " << e.what());
     res = false;

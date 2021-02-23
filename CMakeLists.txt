@@ -5,7 +5,8 @@ project(mannumopt
   LANGUAGES CXX)
 
 install(DIRECTORY include/mannumopt
-  DESTINATION include/mannumopt)
+  DESTINATION include/mannumopt
+  FILES_MATCHING PATTERN "*.hpp")
 
 find_package(Eigen3 3.3 REQUIRED)
 add_library(mannumopt INTERFACE)

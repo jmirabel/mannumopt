@@ -22,7 +22,7 @@ void newtonTR(const char* type, Function<N> func, typename Function<N>::VectorS 
   auto start = chrono::steady_clock::now();
   bool res;
   try {
-    res = newton.minimize(func, x, TrustRegion<double, N>());
+    res = newton.template minimize<TrustRegion<double, N>>(func, x);
   } catch (const std::runtime_error& e) {
     BOOST_TEST_MESSAGE("Caught std::runtime_error: " << e.what());
     res = false;

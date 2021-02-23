@@ -70,6 +70,7 @@ inline integrate_type make_integrate(py::object func)
 void exposeNumDiff(py::module_ m);
 void exposeLineSearch(py::module_ m);
 void exposeBFGS(py::module_ m);
+void exposeNewton(py::module_ m);
 void exposeAugmentedLagrangian(py::module_ m);
 } // namespace pymannumopt
 

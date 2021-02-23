@@ -42,8 +42,8 @@ struct NewtonTR : Algo<Scalar,XDim,TDim> {
     static_assert(XDim != Eigen::Dynamic && TDim != Eigen::Dynamic, "You must provide dimensions");
   }
 
-  template<typename VectorValuedFunctor, typename IntegrateFunctor, typename TrustRegion>
-  bool minimize(VectorValuedFunctor& func, IntegrateFunctor integrate, VectorX& x, TrustRegion tr = TrustRegion())
+  template<typename TrustRegion, typename VectorFunctor, typename IntegrateFunctor>
+  bool minimize(VectorFunctor& func, IntegrateFunctor integrate, VectorX& x, TrustRegion& tr)
   {
     iter = 0;
     Scalar maxstep = u_maxstep / 2;
@@ -81,11 +81,25 @@ struct NewtonTR : Algo<Scalar,XDim,TDim> {
     }
   }
 
-  template<typename Functor, typename TrustRegion>
-  bool minimize(Functor& func, VectorX& x, TrustRegion tr = TrustRegion())
+  template<typename TrustRegion, typename Functor, typename IntegrateFunctor>
+  bool minimize(Functor& func, IntegrateFunctor integrate, VectorX& x)
+  {
+    TrustRegion ls;
+    return minimize(func, integrate, x, ls); 
+  }
+
+  template<typename TrustRegion, typename Functor>
+  bool minimize(Functor& func, VectorX& x, TrustRegion& ls)
   {
     static_assert(XDim == TDim, "Variable space and tangent space must have the same dimension");
-    return minimize(func, &internal::vector_space_addition<Scalar, XDim>, x, tr); 
+    return minimize(func, &internal::vector_space_addition<Scalar, XDim>, x, ls); 
+  }
+
+  template<typename TrustRegion, typename Functor>
+  bool minimize(Functor& func, VectorX& x)
+  {
+    TrustRegion ls;
+    return minimize(func, x, ls); 
   }
 };
 
@@ -124,9 +138,8 @@ struct NewtonLS : Algo<Scalar,XDim,TDim> {
     static_assert(XDim != Eigen::Dynamic && TDim != Eigen::Dynamic, "You must provide dimensions");
   }
 
-
-  template<typename VectorValuedFunctor, typename IntegrateFunctor, typename LineSearch, class Decomposition = ApproxLDLT<MatrixTT> >
-  bool minimize(VectorValuedFunctor& func, IntegrateFunctor integrate, VectorX& x, LineSearch ls = LineSearch())
+  template<typename LineSearch, typename VectorFunctor, typename IntegrateFunctor, class Decomposition = ApproxLDLT<MatrixTT> >
+  bool minimize(VectorFunctor& func, IntegrateFunctor integrate, VectorX& x, LineSearch& ls)
   {
     iter = 0;
     Scalar maxstep = u_maxstep / 2;
@@ -157,12 +170,25 @@ struct NewtonLS : Algo<Scalar,XDim,TDim> {
     }
   }
 
-  template<typename Functor, typename LineSearch, class Decomposition = ApproxLDLT<MatrixTT> >
-  bool minimize(Functor& func, VectorX& x, LineSearch ls = LineSearch())
+  template<typename LineSearch, typename Functor, typename IntegrateFunctor>
+  bool minimize(Functor& func, IntegrateFunctor integrate, VectorX& x)
+  {
+    LineSearch ls;
+    return minimize(func, integrate, x, ls); 
+  }
+
+  template<typename LineSearch, typename Functor>
+  bool minimize(Functor& func, VectorX& x, LineSearch& ls)
   {
     static_assert(XDim == TDim, "Variable space and tangent space must have the same dimension");
-    auto integrate = &internal::vector_space_addition<Scalar, XDim>;
-    return minimize<Functor, decltype(integrate), LineSearch, Decomposition>(func, integrate, x, ls); 
+    return minimize(func, &internal::vector_space_addition<Scalar, XDim>, x, ls); 
+  }
+
+  template<typename LineSearch, typename Functor>
+  bool minimize(Functor& func, VectorX& x)
+  {
+    LineSearch ls;
+    return minimize(func, x, ls); 
   }
 };
 

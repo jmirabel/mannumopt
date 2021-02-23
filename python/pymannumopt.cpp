@@ -61,5 +61,6 @@ PYBIND11_MODULE(pymannumopt, m) {
   exposeNumDiff(m);
   exposeLineSearch(m);
   exposeBFGS(m);
+  exposeNewton(m);
   exposeAugmentedLagrangian(m);
 }

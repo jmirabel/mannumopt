@@ -7,6 +7,7 @@ pybind11_add_module(pymannumopt
   line-search.hpp
   line-search.cpp
   bfgs.cpp
+  newton.cpp
   augmented-lagrangian.cpp
   )
 target_link_libraries(pymannumopt PUBLIC mannumopt)
