@@ -12,6 +12,8 @@ using Eigen::VectorXd;
 using Eigen::RowVectorXd;
 using Eigen::MatrixXd;
 
+typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> RowMajorMatrixXd;
+
 namespace pymannumopt {
 typedef mannumopt::Algo<double, Eigen::Dynamic> Algo;
 
@@ -65,6 +67,7 @@ inline integrate_type make_integrate(py::object func)
   return [&func](VectorXd& x_plus_v, const VectorXd& x, const VectorXd& v) { x_plus_v = func(x, v).cast<VectorXd>(); };
 }
 
+void exposeNumDiff(py::module_ m);
 void exposeLineSearch(py::module_ m);
 void exposeBFGS(py::module_ m);
 void exposeAugmentedLagrangian(py::module_ m);

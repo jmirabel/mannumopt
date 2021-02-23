@@ -3,6 +3,7 @@ add_subdirectory(pybind11)
 pybind11_add_module(pymannumopt
   pymannumopt.hpp
   pymannumopt.cpp
+  numdiff.cpp
   line-search.hpp
   line-search.cpp
   bfgs.cpp

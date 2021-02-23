@@ -8,6 +8,10 @@ struct Function
 {
   MANNUMOPT_ALGO_TYPEDEFS(Scalar, XDim, TDim);
 
+  typedef Scalar     Output;
+  typedef RowVectorT Derivative;
+  typedef MatrixTT   Hessian;
+
   virtual ~Function() = default;
 
   virtual void f(const VectorX& X, double& f) = 0;
@@ -26,6 +30,10 @@ struct VectorFunction
   typedef Eigen::Matrix<Scalar, XDim, 1> VectorX;
   typedef Eigen::Matrix<Scalar, NDim, 1> VectorN;
   typedef Eigen::Matrix<Scalar, NDim, TDim> MatrixNT;
+
+  typedef VectorN  Output;
+  typedef VectorN  OutputVector;
+  typedef MatrixNT Derivative;
 
   virtual ~VectorFunction() = default;
 

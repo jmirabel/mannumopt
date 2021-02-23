@@ -58,6 +58,7 @@ PYBIND11_MODULE(pymannumopt, m) {
     .def_readonly("iter", &Algo::iter)
     ;
 
+  exposeNumDiff(m);
   exposeLineSearch(m);
   exposeBFGS(m);
   exposeAugmentedLagrangian(m);

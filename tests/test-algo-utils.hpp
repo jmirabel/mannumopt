@@ -1,8 +1,11 @@
-#include <mannumopt/fwd.hpp>
 #include <chrono>
+#include <map>
+
+#include <mannumopt/fwd.hpp>
+#include <mannumopt/function.hpp>
 
 template<int N>
-struct Quadratic {
+struct Quadratic : mannumopt::Function<double, N, N> {
   MANNUMOPT_EIGEN_TYPEDEFS(double, N, S);
 
   MatrixS A;
@@ -30,12 +33,11 @@ struct Quadratic {
     for (int i = 0; i < N; ++i)
       A(i,i) = i+1;
   }
-  Quadratic(VectorS d) : A(d.asDiagonal()), B(VectorS::Zero(d.size())) {}
   Quadratic(MatrixS A) : A(A), B(VectorS::Zero(A.rows())) {}
 };
 
 template<int N>
-struct Rosenbrock {
+struct Rosenbrock : mannumopt::Function<double, N, N> {
   MANNUMOPT_EIGEN_TYPEDEFS(double, N, S);
 
   double a = 100.;
