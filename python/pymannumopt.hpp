@@ -46,7 +46,8 @@ struct Function : FunctionBase
   }
 };
 
-struct VectorFunction : VectorFunctionBase {
+struct VectorFunction : VectorFunctionBase
+{
   virtual void f_py(const VectorXd& X, Eigen::Ref<VectorXd> f) = 0;
   virtual void f_fx_py(const VectorXd& X, Eigen::Ref<VectorXd> f, Eigen::Ref<MatrixXd> fx) = 0;
 
@@ -72,5 +73,6 @@ void exposeLineSearch(py::module_ m);
 void exposeBFGS(py::module_ m);
 void exposeNewton(py::module_ m);
 void exposeAugmentedLagrangian(py::module_ m);
+void exposeGaussNewton(py::module_ m);
 } // namespace pymannumopt
 

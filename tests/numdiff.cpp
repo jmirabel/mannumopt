@@ -18,12 +18,14 @@ struct ScalarToVector : VectorFunction<double, 1, Eigen::Dynamic, Eigen::Dynamic
 
   ScalarToVector(Function f) : func(f) {}
 
-  void f(const VectorX& X, VectorN& f)
+  int dimension() override { return 1.; }
+
+  void f(const VectorX& X, VectorN& f) override
   {
     func.f(X, f(0));
   }
 
-  void f_fx(const VectorX& X, VectorN& f, MatrixNT& fx)
+  void f_fx(const VectorX& X, VectorN& f, MatrixNT& fx) override
   {
     func.f_fx(X, f(0), fx);
   }

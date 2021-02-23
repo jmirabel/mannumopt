@@ -23,6 +23,10 @@ public:
   using VectorFunction::VectorFunction;
   virtual ~PyVectorFunction() = default;
 
+  virtual int dimension() override {
+    PYBIND11_OVERRIDE_PURE(int, VectorFunction, dimension);
+  }
+
   virtual void f_py(const VectorXd& X, Eigen::Ref<VectorXd> f) override {
     PYBIND11_OVERRIDE_PURE_NAME(void, VectorFunction, "f", f_py, X, f);
   }
@@ -63,4 +67,5 @@ PYBIND11_MODULE(pymannumopt, m) {
   exposeBFGS(m);
   exposeNewton(m);
   exposeAugmentedLagrangian(m);
+  exposeGaussNewton(m);
 }

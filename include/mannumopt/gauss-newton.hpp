@@ -46,8 +46,8 @@ struct GaussNewton : Algo<Scalar,XDim,TDim> {
   {
     iter = 0;
 
-    typedef typename VectorValuedFunctor::ValueType ValueType;
-    typedef typename VectorValuedFunctor::DerivativeType DerivativeType;
+    typedef typename VectorValuedFunctor::VectorN ValueType;
+    typedef typename VectorValuedFunctor::MatrixNT DerivativeType;
 
     auto n (func.dimension());
 
@@ -59,8 +59,7 @@ struct GaussNewton : Algo<Scalar,XDim,TDim> {
     struct Norm2 : Function<Scalar, XDim, TDim> {
       void f(const VectorX& X, Scalar& fn) override
       {
-        func.f(X, f_);
-        fn = .5 * f_.squaredNorm();
+        func.residual(X, fn);
       }
       void f_fx(const VectorX& X, Scalar& fn, RowVectorT& fx) override
       {

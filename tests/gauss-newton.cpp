@@ -78,7 +78,7 @@ enum FunctionType {
 /// \tparam N + 1: order of the polynom
 /// \tparam M number of measurements
 template<int N, int M>
-struct ExpressionFitting {
+struct ExpressionFitting : mannumopt::VectorFunction<double, M, N> {
   MANNUMOPT_EIGEN_TYPEDEFS(double, N, S);
 
   typedef Eigen::Matrix<double, M, 1> ValueType;
@@ -94,19 +94,12 @@ struct ExpressionFitting {
 
   constexpr int dimension() { return inputs.size(); }
 
-  void residual(const VectorS& X, double& r)
-  {
-    ValueType f(inputs.size());
-    this->f(X, f);
-    r = .5 * f.squaredNorm();
-  }
-
-  void f(const VectorS& X, ValueType& f)
+  void f(const VectorS& X, ValueType& f) override
   {
     f = exprV(X, inputs) - outputs;
   }
 
-  void f_fx(const VectorS& X, ValueType& f, DerivativeType& fx)
+  void f_fx(const VectorS& X, ValueType& f, DerivativeType& fx) override
   {
     this->f(X, f);
     fx = exprD(X, inputs);

@@ -9,6 +9,7 @@ pybind11_add_module(pymannumopt
   bfgs.cpp
   newton.cpp
   augmented-lagrangian.cpp
+  gauss-newton.cpp
   )
 target_link_libraries(pymannumopt PUBLIC mannumopt)
 set_target_properties(pymannumopt

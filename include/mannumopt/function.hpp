@@ -37,6 +37,15 @@ struct VectorFunction
 
   virtual ~VectorFunction() = default;
 
+  virtual int dimension() = 0;
+
+  inline void residual(const VectorX& X, double& r)
+  {
+    VectorN f(dimension());
+    this->f(X, f);
+    r = .5 * f.squaredNorm();
+  }
+
   virtual void f(const VectorX& X, VectorN& f) = 0;
 
   virtual void f_fx(const VectorX& X, VectorN& f, MatrixNT& fx) = 0;
