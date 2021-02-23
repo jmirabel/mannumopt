@@ -94,7 +94,7 @@ struct AugmentedLagrangian : Algo<Scalar,XDim,TDim> {
     E.f(x1, al.e);
     Scalar feas = al.e.squaredNorm(), prevfeas = feas;
 
-    while(mu < 1e10 && iter < maxIter) {
+    while(true) {
       // Compute tolerance for sub-problem.
       bool reached_desired_fxtol = (feas < 10*etol2);
       if (reached_desired_fxtol)
@@ -112,8 +112,20 @@ struct AugmentedLagrangian : Algo<Scalar,XDim,TDim> {
         // Check the KKT condition:
         // optimality: cx - lambda^T * ex = 0 => ensured by the inner algorithm.
         // feasibility: e = 0
-        if (reached_desired_fxtol && feas < etol2)
+        if (reached_desired_fxtol && feas < etol2) {
+          if (this->verbose()) {
+            C.f_fx(x1, al.c, al.cx);
+            E.f_fx(x1, al.e, al.ex);
+          }
+          this->print(true,
+              "", ' ',
+              "iter", iter,
+              "cost", al.c,
+              "*feas*", al.e.squaredNorm(),
+              "*optim*", (al.cx - lambda.transpose()*al.ex).squaredNorm(),
+              "inner_its", ialgo.iter);
           return true;
+        }
         lambda.noalias() -= mu * al.e;
         if (feas > prevfeas / 2)
           mu *= 25;
@@ -128,6 +140,17 @@ struct AugmentedLagrangian : Algo<Scalar,XDim,TDim> {
       if (this->verbose()) {
         C.f_fx(x1, al.c, al.cx);
         E.f_fx(x1, al.e, al.ex);
+      }
+      if (mu > 1e10 || iter > maxIter) {
+        this->print(true,
+            "", (success ? ' ' : '!'),
+            (iter>maxIter ? "*last_iter*" : "last_iter"), iter,
+            "cost", al.c,
+            "feas", al.e.squaredNorm(),
+            "optim", (al.cx - lambda.transpose()*al.ex).squaredNorm(),
+            "inner_its", ialgo.iter,
+            (mu > 1e10 ? "*mu*" : "mu"), mu);
+        return false;
       }
       this->print(ialgo.verbose() || iter%10 == 0,
           "", (success ? ' ' : '!'),

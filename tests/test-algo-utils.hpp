@@ -30,7 +30,7 @@ struct Quadratic : mannumopt::Function<double, N, N> {
   }
 
   Quadratic(int n = N) : A(MatrixS::Zero(n,n)), B(VectorS::Zero(n)) {
-    for (int i = 0; i < N; ++i)
+    for (int i = 0; i < n; ++i)
       A(i,i) = i+1;
   }
   Quadratic(MatrixS A) : A(A), B(VectorS::Zero(A.rows())) {}

@@ -53,10 +53,14 @@ struct BFGS : Algo<Scalar,XDim,TDim> {
       fx1.swap(fx2);
 
       // Check termination criterion
-      if (fx1.squaredNorm() < fxtol2)
+      if (fx1.squaredNorm() < fxtol2) {
+        this->print(true, "last_iter", iter, "cost", f1, "*grad*", fx1.norm());
         return true;
-      if (iter > maxIter)
+      }
+      if (iter > maxIter) {
+        this->print(true, "*last_iter*", iter, "cost", f1, "grad", fx1.norm());
         return false;
+      }
 
       p = - fxx_i * fx1.transpose();
       Scalar a = 1.;

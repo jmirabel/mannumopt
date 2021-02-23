@@ -85,12 +85,21 @@ struct GaussNewton : Algo<Scalar,XDim,TDim> {
       ex.noalias() = f1.transpose() * fx1;
 
       // Check termination criterion: ||de/dx||^2 < fxtol2
-      if (e < xtol)
+      if (e < xtol) {
+        this->print(true, "last_iter", iter, "*cost*", e,
+            "grad", ex.norm());
         return true;
-      if (ex.squaredNorm() < fxtol2)
+      }
+      if (ex.squaredNorm() < fxtol2) {
+        this->print(true, "last_iter", iter, "cost", e,
+            "*grad*", ex.norm());
         return true;
-      if (iter > maxIter)
+      }
+      if (iter > maxIter) {
+        this->print(true, "*last_iter*", iter, "cost", e,
+            "*grad*", ex.norm());
         return false;
+      }
 
       // df/dx v = - f
       // or d2e/dx2 p = - de/dx^T

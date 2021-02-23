@@ -54,10 +54,14 @@ struct NewtonTR : Algo<Scalar,XDim,TDim> {
       func.f_fx_fxx(x, f, fx, fxx);
 
       // Check termination criterion
-      if (fx.squaredNorm() < fxtol2)
+      if (fx.squaredNorm() < fxtol2) {
+        this->print(true, "last_iter", iter, "cost", f, "*grad*", fx.norm());
         return true;
-      if (iter > maxIter)
+      }
+      if (iter > maxIter) {
+        this->print(true, "*last_iter*", iter, "cost", f, "grad", fx.norm());
         return false;
+      }
 
       Scalar p_norm;
       tr(fx, fxx, maxstep, p, p_norm);
@@ -152,10 +156,14 @@ struct NewtonLS : Algo<Scalar,XDim,TDim> {
       func.f_fx_fxx(x, f, fx, fxx);
 
       // Check termination criterion
-      if (fx.squaredNorm() < fxtol2)
+      if (fx.squaredNorm() < fxtol2) {
+        this->print(true, "last_iter", iter, "cost", f, "*grad*", fx.norm());
         return true;
-      if (iter > maxIter)
+      }
+      if (iter > maxIter) {
+        this->print(true, "*last_iter*", iter, "cost", f, "grad", fx.norm());
         return false;
+      }
 
       p = dec.compute(fxx).solve(- fx.transpose());
       Scalar a = 1.;
