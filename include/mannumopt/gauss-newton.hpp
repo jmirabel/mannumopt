@@ -1,9 +1,8 @@
 #pragma once
 
-#include <iostream>
-#include <iomanip>
-
 #include <mannumopt/fwd.hpp>
+#include <mannumopt/function.hpp>
+
 #include <Eigen/Cholesky>
 #include <Eigen/SVD>
 
@@ -25,15 +24,25 @@ struct GaussNewton : Algo<Scalar,XDim,TDim> {
   VectorT p;
   VectorX x2;
 
-  GaussNewton(int xdim = XDim, int tdim = TDim) :
+  GaussNewton(int xdim, int tdim) :
     exx(tdim,tdim),
     ex(tdim),
     p(tdim),
     x2(xdim)
   {}
 
-  template<typename VectorValuedFunctor, typename IntegrateFunctor, typename LineSearch, class Decomposition = Eigen::LDLT<MatrixTT> >
-  bool minimize(VectorValuedFunctor& func, IntegrateFunctor integrate, VectorX& x1, LineSearch ls = LineSearch())
+  GaussNewton(int dim) : GaussNewton(dim, dim)
+  {
+    static_assert(XDim == TDim, "Dimensions must be equals");
+  }
+
+  GaussNewton() : GaussNewton(XDim, TDim)
+  {
+    static_assert(XDim != Eigen::Dynamic && TDim != Eigen::Dynamic, "You must provide dimensions");
+  }
+
+  template<typename LineSearch, typename VectorValuedFunctor, typename IntegrateFunctor, class Decomposition = Eigen::LDLT<MatrixTT> >
+  bool minimize(VectorValuedFunctor& func, IntegrateFunctor integrate, VectorX& x1, LineSearch& ls)
   {
     iter = 0;
 
@@ -45,14 +54,15 @@ struct GaussNewton : Algo<Scalar,XDim,TDim> {
     ValueType f1(n);
     DerivativeType fx1(n, exx.rows());
 
-    Decomposition dec (exx.size());
+    Decomposition dec (exx.rows());
 
-    struct Norm2 {
-      void f(const VectorX& X, Scalar& fn) {
+    struct Norm2 : Function<Scalar, XDim, TDim> {
+      void f(const VectorX& X, Scalar& fn) override
+      {
         func.f(X, f_);
         fn = .5 * f_.squaredNorm();
       }
-      void f_fx(const VectorX& X, Scalar& fn, RowVectorT& fx)
+      void f_fx(const VectorX& X, Scalar& fn, RowVectorT& fx) override
       {
         func.f_fx(X, f_, fx_);
         fn = .5 * f_.squaredNorm();
@@ -62,6 +72,9 @@ struct GaussNewton : Algo<Scalar,XDim,TDim> {
       VectorValuedFunctor& func;
       ValueType& f_;
       DerivativeType& fx_;
+
+      Norm2 (VectorValuedFunctor& func, ValueType& f, DerivativeType& fx)
+        :func(func), f_(f), fx_(fx) {}
     } funcLs{func, f1, fx1};
 
     while(true) {
@@ -99,12 +112,26 @@ struct GaussNewton : Algo<Scalar,XDim,TDim> {
     }
   }
 
-  template<typename VectorValuedFunctor, typename LineSearch, class Decomposition = Eigen::LDLT<MatrixTT> >
-  bool minimize(VectorValuedFunctor& func, VectorX& x, LineSearch ls = LineSearch())
+  template<typename LineSearch, typename VectorValuedFunctor, typename IntegrateFunctor, class Decomposition = Eigen::LDLT<MatrixTT> >
+  bool minimize(VectorValuedFunctor& func, IntegrateFunctor integrate, VectorX& x1)
+  {
+    LineSearch ls;
+    return minimize<LineSearch, VectorValuedFunctor, IntegrateFunctor, Decomposition>(func, integrate, x1, ls);
+  }
+
+  template<typename LineSearch, typename VectorValuedFunctor, class Decomposition = Eigen::LDLT<MatrixTT> >
+  bool minimize(VectorValuedFunctor& func, VectorX& x, LineSearch& ls)
   {
     static_assert(XDim == TDim, "Variable space and tangent space must have the same dimension");
     auto integrate = &internal::vector_space_addition<Scalar, XDim>;
-    return minimize<VectorValuedFunctor, decltype(integrate), LineSearch, Decomposition>(func, integrate, x, ls); 
+    return minimize<LineSearch, VectorValuedFunctor, decltype(integrate), Decomposition>(func, integrate, x, ls);
+  }
+
+  template<typename LineSearch, typename VectorValuedFunctor, class Decomposition = Eigen::LDLT<MatrixTT> >
+  bool minimize(VectorValuedFunctor& func, VectorX& x)
+  {
+    LineSearch ls;
+    return minimize<LineSearch, VectorValuedFunctor, Decomposition>(func, x, ls);
   }
 };
 

@@ -1,6 +1,7 @@
 #include <mannumopt/gauss-newton.hpp>
 #include <mannumopt/line-search/armijo.hpp>
 
+#include <iostream>
 #include <boost/test/unit_test.hpp>
 
 #include "test-algo-utils.hpp"
@@ -21,7 +22,7 @@ auto polynom(const Eigen::Matrix<double, N, 1>& coeffs, const Eigen::Matrix<doub
 {
   Eigen::Matrix<double, M, 1> res (coeffs[0] + coeffs[1] * x.array());
   Eigen::Array<double, M, 1> x_pow_i (x);
-  for (int i = 2; i < N; ++i) {
+  for (int i = 2; i < coeffs.size(); ++i) {
     x_pow_i *= x.array();
     res.array() += x_pow_i * coeffs[i];
   }
@@ -35,7 +36,7 @@ auto dpolynom(const Eigen::Matrix<double, N, 1>& coeffs, const Eigen::Matrix<dou
   Eigen::Matrix<double, M, N> res (x.size(), coeffs.size());
   res.col(0).setOnes();
   res.col(1) = x;
-  for (int i = 2; i < N; ++i)
+  for (int i = 2; i < coeffs.size(); ++i)
     res.col(i) = res.col(i-1).array() * x.array();
   return res;
 }
@@ -44,10 +45,11 @@ template<int N, int M>
 auto expression(const Eigen::Matrix<double, N, 1>& coeffs, const Eigen::Matrix<double, M, 1>& x)
   -> Eigen::Matrix<double, M, 1>
 {
-  static_assert(N%2 == 1, "N should be uneven");
-  Eigen::Matrix<double, M, 1> res;
+  static_assert(N==Eigen::Dynamic || N%2 == 1, "N should be uneven");
+  assert(coeffs.size()%2==1);
+  Eigen::Matrix<double, M, 1> res(x.size());
   res.setConstant (coeffs[0]);
-  for (int k = 1; k < N; k+=2)
+  for (int k = 1; k < coeffs.size(); k+=2)
     res.array() += coeffs[k] * (x.array()*coeffs[k+1]).exp();
   return res;
 }
@@ -56,10 +58,11 @@ template<int N, int M>
 auto dexpression(const Eigen::Matrix<double, N, 1>& coeffs, const Eigen::Matrix<double, M, 1>& x)
   -> Eigen::Matrix<double, M, N>
 {
-  static_assert(N%2 == 1, "N should be uneven");
+  static_assert(N==Eigen::Dynamic || N%2 == 1, "N should be uneven");
+  assert(coeffs.size()%2==1);
   Eigen::Matrix<double, M, N> res (x.size(), coeffs.size());
   res.col(0).setOnes();
-  for (int k = 1; k < N; k+=2) {
+  for (int k = 1; k < coeffs.size(); k+=2) {
     res.col(k) = (x.array()*coeffs[k+1]).exp();
     res.col(k+1) = coeffs[k] * x.array() * res.col(k).array();
   }
@@ -89,11 +92,11 @@ struct ExpressionFitting {
   VectorS expectedCoeffs;
   ValueType inputs, outputs;
 
-  constexpr int dimension() { return M; }
+  constexpr int dimension() { return inputs.size(); }
 
   void residual(const VectorS& X, double& r)
   {
-    ValueType f;
+    ValueType f(inputs.size());
     this->f(X, f);
     r = .5 * f.squaredNorm();
   }
@@ -109,7 +112,7 @@ struct ExpressionFitting {
     fx = exprD(X, inputs);
   }
 
-  ExpressionFitting(FunctionType type, const VectorS& coeffs, double err) {
+  ExpressionFitting(FunctionType type, const VectorS& coeffs, double err, int m = M) : inputs(m) {
     switch (type) {
       case PolynomFitting:
         exprV = &polynom<N,M>;
@@ -122,14 +125,14 @@ struct ExpressionFitting {
     }
     expectedCoeffs = coeffs;
     inputs.setRandom();
-    outputs = exprV(coeffs, inputs) + err * ValueType::Random();
+    outputs = exprV(coeffs, inputs) + err * ValueType::Random(m);
   }
 };
 
 template<template<class,int,int> class LineSearch, int N, int M, template<int, int> class Function>
 void gauss_newton(const char* type, Function<N, M> func, typename Function<N, M>::VectorS x)
 {
-  mannumopt::GaussNewton<double, N> gn;
+  mannumopt::GaussNewton<double, N> gn(x.size());
   gn.xtol = 1e-8;
   gn.fxtol2 = 1e-12;
   gn.maxIter = 100;
@@ -139,7 +142,7 @@ void gauss_newton(const char* type, Function<N, M> func, typename Function<N, M>
   auto start = chrono::steady_clock::now();
   bool res;
   try {
-    res = gn.minimize(func, x, LineSearch<double, N, N>());
+    res = gn.template minimize<LineSearch<double, N, N>>(func, x);
   } catch (const std::runtime_error& e) {
     BOOST_TEST_MESSAGE("Caught std::runtime_error: " << e.what());
     res = false;
@@ -148,22 +151,30 @@ void gauss_newton(const char* type, Function<N, M> func, typename Function<N, M>
   gn_status(type, gn, res, start, end, func, x);
 }
 
-template<int N, int M> void test_gauss_newton(FunctionType type, double err)
+template<int N, int M> void test_gauss_newton_tpl(int n, int m, FunctionType type, double err)
 {
-  Eigen::Matrix<double, N, 1> x, coeffs;
+  Eigen::Matrix<double, N, 1> x(n), coeffs(n);
   BOOST_TEST_MESSAGE("noise level: " << err);
-  for (int i = 0; i < 1; ++i) {
+  for (int i = 0; i < 10; ++i) {
     x.setRandom();
     x.array() += 1.;
 
     coeffs.setRandom();
     coeffs = 0.5 * coeffs.array() + 1.5;
 
-    ExpressionFitting<N, M> func(type, coeffs, err);
+    ExpressionFitting<N, M> func(type, coeffs, err, m);
 
     gauss_newton<mannumopt::lineSearch::Armijo>("gauss_newton-armijo", func, x);
     gauss_newton<mannumopt::lineSearch::BisectionWeakWolfe>("gauss_newton-bisection", func, x);
   }
+}
+
+template<int N, int M> void test_gauss_newton(FunctionType type, double err)
+{
+  // Size known at compile time
+  test_gauss_newton_tpl<N, M>(N, M, type, err);
+  // Size known at run time
+  test_gauss_newton_tpl<Eigen::Dynamic, Eigen::Dynamic>(N, M, type, err);
 }
 
 template<int N, int M> void test_gauss_newton(FunctionType type)

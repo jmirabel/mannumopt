@@ -25,12 +25,22 @@ struct NewtonTR : Algo<Scalar,XDim,TDim> {
   Scalar eta = 0.1;
   Scalar u_maxstep = 2.;
 
-  NewtonTR(int xdim = XDim, int tdim = TDim) :
+  NewtonTR(int xdim, int tdim) :
     fxx(tdim,tdim),
     fx(tdim),
     p(tdim),
     xn(xdim)
   {}
+
+  NewtonTR(int dim) : NewtonTR(dim, dim)
+  {
+    static_assert(XDim == TDim, "Dimensions must be equals");
+  }
+
+  NewtonTR() : NewtonTR(XDim, TDim)
+  {
+    static_assert(XDim != Eigen::Dynamic && TDim != Eigen::Dynamic, "You must provide dimensions");
+  }
 
   template<typename VectorValuedFunctor, typename IntegrateFunctor, typename TrustRegion>
   bool minimize(VectorValuedFunctor& func, IntegrateFunctor integrate, VectorX& x, TrustRegion tr = TrustRegion())
@@ -97,12 +107,23 @@ struct NewtonLS : Algo<Scalar,XDim,TDim> {
   Scalar eta = 0.1;
   Scalar u_maxstep = 2.;
 
-  NewtonLS(int xdim = XDim, int tdim = TDim) :
+  NewtonLS(int xdim, int tdim) :
     fxx(tdim,tdim),
     fx(tdim),
     p(tdim),
     xn(xdim)
   {}
+
+  NewtonLS(int dim) : NewtonLS(dim, dim)
+  {
+    static_assert(XDim == TDim, "Dimensions must be equals");
+  }
+
+  NewtonLS() : NewtonLS(XDim, TDim)
+  {
+    static_assert(XDim != Eigen::Dynamic && TDim != Eigen::Dynamic, "You must provide dimensions");
+  }
+
 
   template<typename VectorValuedFunctor, typename IntegrateFunctor, typename LineSearch, class Decomposition = ApproxLDLT<MatrixTT> >
   bool minimize(VectorValuedFunctor& func, IntegrateFunctor integrate, VectorX& x, LineSearch ls = LineSearch())

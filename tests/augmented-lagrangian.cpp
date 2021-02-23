@@ -13,14 +13,14 @@ template<template<class,int,int> class LineSearch, int N, template<int> class Co
 void augmented_lagrangian(const char* type, CostFunction<N> cost,
     EConstraint econstraint, typename CostFunction<N>::VectorS x)
 {
-  mannumopt::AugmentedLagrangian<double, N, N, EConstraint::dimension()> al;
+  mannumopt::AugmentedLagrangian<double, N, N, EConstraint::dimension()> al(x.size(), x.size(), econstraint.dimension());
   al.etol2 = 1e-12;
   al.fxtol2 = 1e-10;
   al.maxIter = 40;
   if (verbosityLevel() > 0)
     al.cout = &std::cout;
 
-  mannumopt::BFGS<double, N> bfgs;
+  mannumopt::BFGS<double, N> bfgs(x.size());
   bfgs.maxIter = 100;
   if (verbosityLevel() > 1)
     bfgs.cout = &std::cout;
@@ -29,7 +29,7 @@ void augmented_lagrangian(const char* type, CostFunction<N> cost,
   auto start = chrono::steady_clock::now();
   bool res;
   try {
-    res = al.minimize(cost, econstraint, x, bfgs, LineSearch<double, N, N>());
+    res = al.template minimize<LineSearch<double,N,N>>(cost, econstraint, x, bfgs);
   } catch (const std::runtime_error& e) {
     BOOST_TEST_MESSAGE("Caught std::runtime_error: " << e.what());
     res = false;
@@ -60,12 +60,12 @@ struct ScalarToVector : ScalarFunctor {
   }
 };
 
-template<int N, template<int> class CostFunction, class... Args> void test_augmented_lagrangian(Args&&... args)
+template<int N, template<int> class CostFunction, class... Args> void test_augmented_lagrangian_tpl(int n, Args&&... args)
 {
-  Eigen::Matrix<double, N, 1> x;
-  ScalarToVector< Quadratic<N>, N> ec;
-  ec.A.setIdentity();
-  ec.B.setZero();
+  Eigen::Matrix<double, N, 1> x(n);
+  ScalarToVector< Quadratic<N>, N> ec(n);
+  ec.A = decltype(ec.A)::Identity(n,n);
+  ec.B = decltype(ec.B)::Zero(n);
   ec.c = -1;
 
   for (int i = 0; i < 20; ++i) {
@@ -78,6 +78,14 @@ template<int N, template<int> class CostFunction, class... Args> void test_augme
     augmented_lagrangian<mannumopt::lineSearch::Armijo>("al-bfgs-armijo", cost, ec, x);
     augmented_lagrangian<mannumopt::lineSearch::BisectionWeakWolfe>("al-bfgs-bisection", cost, ec, x);
   }
+}
+
+template<int N, template<int> class CostFunction, class... Args> void test_augmented_lagrangian(Args&&... args)
+{
+  // Size known at compile time
+  test_augmented_lagrangian_tpl<N, CostFunction, Args...>(N, std::forward<Args>(args)...);
+  // Size known at run time
+  test_augmented_lagrangian_tpl<Eigen::Dynamic, CostFunction, Args...>(N, std::forward<Args>(args)...);
 }
 
 //TEST_ALGO(augmented_lagrangian)

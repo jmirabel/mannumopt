@@ -21,8 +21,8 @@ struct BFGS : Algo<Scalar,XDim,TDim> {
   VectorT p;
   VectorX x2;
 
-  BFGS(int xdim = XDim, int tdim = TDim) :
-    fxx_i(tdim, tdim),
+  BFGS(int xdim, int tdim) :
+    fxx_i(MatrixTT::Identity(tdim, tdim)),
     C(tdim, tdim),
     fx1(tdim),
     fx2(tdim),
@@ -30,8 +30,18 @@ struct BFGS : Algo<Scalar,XDim,TDim> {
     x2(xdim)
   {}
 
-  template<typename Functor, typename IntegrateFunctor, typename LineSearch>
-  bool minimize(Functor& func, IntegrateFunctor integrate, VectorX& x1, LineSearch ls = LineSearch())
+  BFGS(int dim) : BFGS(dim, dim)
+  {
+    static_assert(XDim == TDim, "Dimensions must be equals");
+  }
+
+  BFGS() : BFGS(XDim, TDim)
+  {
+    static_assert(XDim != Eigen::Dynamic && TDim != Eigen::Dynamic, "You must provide dimensions");
+  }
+
+  template<typename LineSearch, typename Functor, typename IntegrateFunctor>
+  bool minimize(Functor& func, IntegrateFunctor integrate, VectorX& x1, LineSearch& ls)
   {
     iter = 0;
 
@@ -74,11 +84,25 @@ struct BFGS : Algo<Scalar,XDim,TDim> {
     }
   }
 
-  template<typename Functor, typename LineSearch>
-  bool minimize(Functor& func, VectorX& x, LineSearch ls = LineSearch())
+  template<typename LineSearch, typename Functor, typename IntegrateFunctor>
+  bool minimize(Functor& func, IntegrateFunctor integrate, VectorX& x)
+  {
+    LineSearch ls;
+    return minimize(func, integrate, x, ls); 
+  }
+
+  template<typename LineSearch, typename Functor>
+  bool minimize(Functor& func, VectorX& x, LineSearch& ls)
   {
     static_assert(XDim == TDim, "Variable space and tangent space must have the same dimension");
     return minimize(func, &internal::vector_space_addition<Scalar, XDim>, x, ls); 
+  }
+
+  template<typename LineSearch, typename Functor>
+  bool minimize(Functor& func, VectorX& x)
+  {
+    LineSearch ls;
+    return minimize(func, x, ls); 
   }
 };
 

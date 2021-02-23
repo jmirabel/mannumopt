@@ -13,7 +13,7 @@ namespace chrono = std::chrono;
 template<template<class,int> class TrustRegion, int N, template<int> class Function>
 void newtonTR(const char* type, Function<N> func, typename Function<N>::VectorS x)
 {
-  mannumopt::NewtonTR<double, N> newton;
+  mannumopt::NewtonTR<double, N> newton (x.size());
   newton.fxtol2 = 1e-12;
   newton.maxIter = 100;
   if (verbosityLevel() > 0)

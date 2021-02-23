@@ -1,6 +1,7 @@
 #pragma once
 
 #include <mannumopt/fwd.hpp>
+#include <mannumopt/function.hpp>
 
 namespace mannumopt {
 
@@ -17,7 +18,7 @@ struct AugmentedLagrangian : Algo<Scalar,XDim,TDim> {
   using AlgoBase::iter;
 
   template <typename CFunctor, typename EFunctor>
-  struct AL {
+  struct AL : Function<Scalar, XDim, TDim> {
     CFunctor& C;
     EFunctor& E;
 
@@ -36,7 +37,7 @@ struct AugmentedLagrangian : Algo<Scalar,XDim,TDim> {
       cx(tdim), e(lambda.size()), ex(lambda.size(), tdim)
     {}
 
-    void f(const VectorX& X, double& f)
+    void f(const VectorX& X, double& f) override
     {
       C.f(X, c);
       E.f(X, e);
@@ -45,7 +46,7 @@ struct AugmentedLagrangian : Algo<Scalar,XDim,TDim> {
       f = c + (- lambda + 0.5 * mu * e).dot(e);
     }
 
-    void f_fx(const VectorX& X, double& f, RowVectorT& fx)
+    void f_fx(const VectorX& X, double& f, RowVectorT& fx) override
     {
       C.f_fx(X, c, cx);
       E.f_fx(X, e, ex);
@@ -63,11 +64,26 @@ struct AugmentedLagrangian : Algo<Scalar,XDim,TDim> {
   VectorE lambda;
   VectorX x2;
 
-  AugmentedLagrangian(int xdim = XDim, int tdim = TDim, int ecdim = ECDim)
+  AugmentedLagrangian(int xdim, int tdim, int ecdim)
     : tdim(tdim), lambda(VectorE::Zero(ecdim)), x2(xdim) {}
 
-  template<typename CFunctor, typename EFunctor, typename IntegrateFunctor, typename InnerAlgo, typename InnerLineSearch>
-  bool minimize(CFunctor& C, EFunctor& E, IntegrateFunctor integrate, VectorX& x1, InnerAlgo& ialgo = InnerAlgo(), InnerLineSearch ils = InnerLineSearch())
+  AugmentedLagrangian(int dim, int ecdim) : AugmentedLagrangian(dim, dim, ecdim)
+  {
+    static_assert(XDim == TDim, "Dimensions must be equals");
+  }
+
+  AugmentedLagrangian(int ecdim) : AugmentedLagrangian(XDim, TDim, ecdim)
+  {
+    static_assert(XDim != Eigen::Dynamic && TDim != Eigen::Dynamic, "You must provide dimensions");
+  }
+
+  AugmentedLagrangian() : AugmentedLagrangian(XDim, TDim, ECDim)
+  {
+    static_assert(XDim != Eigen::Dynamic && TDim != Eigen::Dynamic && ECDim != Eigen::Dynamic, "You must provide dimensions");
+  }
+
+  template<typename InnerLineSearch, typename InnerAlgo, typename CFunctor, typename EFunctor, typename IntegrateFunctor>
+  bool minimize(CFunctor& C, EFunctor& E, IntegrateFunctor integrate, VectorX& x1, InnerAlgo& ialgo, InnerLineSearch& ils)
   {
     iter = 0;
 
@@ -127,11 +143,25 @@ struct AugmentedLagrangian : Algo<Scalar,XDim,TDim> {
     return false;
   }
 
-  template<typename CFunctor, typename EFunctor, typename InnerAlgo, typename InnerLineSearch>
-  bool minimize(CFunctor& C, EFunctor& E, VectorX& x1, InnerAlgo& ialgo = InnerAlgo(), InnerLineSearch ils = InnerLineSearch())
+  template<typename InnerLineSearch, typename InnerAlgo, typename CFunctor, typename EFunctor, typename IntegrateFunctor>
+  bool minimize(CFunctor& C, EFunctor& E, IntegrateFunctor integrate, VectorX& x1, InnerAlgo& ialgo)
+  {
+    InnerLineSearch ls;
+    return minimize(C, E, integrate, x1, ialgo, ls);
+  }
+
+  template<typename InnerLineSearch, typename InnerAlgo, typename CFunctor, typename EFunctor>
+  bool minimize(CFunctor& C, EFunctor& E, VectorX& x1, InnerAlgo& ialgo, InnerLineSearch& ils)
   {
     static_assert(XDim == TDim, "Variable space and tangent space must have the same dimension");
     return minimize(C, E, &internal::vector_space_addition<Scalar, XDim>, x1, ialgo, ils);
+  }
+
+  template<typename InnerLineSearch, typename InnerAlgo, typename CFunctor, typename EFunctor>
+  bool minimize(CFunctor& C, EFunctor& E, VectorX& x1, InnerAlgo& ialgo)
+  {
+    InnerLineSearch ls;
+    return minimize(C, E, x1, ialgo, ls);
   }
 
 };
