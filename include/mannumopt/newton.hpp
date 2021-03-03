@@ -8,7 +8,18 @@
 
 namespace mannumopt {
 
-template<typename Scalar, int XDim, int TDim = XDim>
+namespace internal {
+  template<typename Scalar, int XDim, int TDim>
+  struct traits<NewtonTR<Scalar, XDim, TDim>> {
+    static constexpr bool for_vector_function = false;
+  };
+  template<typename Scalar, int XDim, int TDim>
+  struct traits<NewtonLS<Scalar, XDim, TDim>> {
+    static constexpr bool for_vector_function = false;
+  };
+} // namespace internal
+
+template<typename Scalar, int XDim, int TDim>
 struct NewtonTR : Algo<Scalar,XDim,TDim> {
   MANNUMOPT_ALGO_TYPEDEFS(Scalar, XDim, TDim);
 
@@ -107,7 +118,7 @@ struct NewtonTR : Algo<Scalar,XDim,TDim> {
   }
 };
 
-template<typename Scalar, int XDim, int TDim = XDim>
+template<typename Scalar, int XDim, int TDim>
 struct NewtonLS : Algo<Scalar,XDim,TDim> {
   MANNUMOPT_ALGO_TYPEDEFS(Scalar, XDim, TDim);
 

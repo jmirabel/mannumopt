@@ -74,5 +74,6 @@ void exposeBFGS(py::module_ m);
 void exposeNewton(py::module_ m);
 void exposeAugmentedLagrangian(py::module_ m);
 void exposeGaussNewton(py::module_ m);
+void exposePenalty(py::module_ m);
 } // namespace pymannumopt
 

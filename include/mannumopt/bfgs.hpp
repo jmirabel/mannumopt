@@ -7,7 +7,14 @@
 
 namespace mannumopt {
 
-template<typename Scalar, int XDim, int TDim = XDim>
+namespace internal {
+  template<typename Scalar, int XDim, int TDim>
+  struct traits<BFGS<Scalar, XDim, TDim>> {
+    constexpr static bool for_vector_function = false;
+  };
+} // namespace internal
+
+template<typename Scalar, int XDim, int TDim>
 struct BFGS : Algo<Scalar,XDim,TDim> {
   MANNUMOPT_ALGO_TYPEDEFS(Scalar, XDim, TDim);
 
@@ -110,5 +117,4 @@ struct BFGS : Algo<Scalar,XDim,TDim> {
   }
 };
 
-}
-
+} // namespace mannumopt

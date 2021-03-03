@@ -8,7 +8,14 @@
 
 namespace mannumopt {
 
-template<typename Scalar, int XDim, int TDim = XDim>
+namespace internal {
+  template<typename Scalar, int XDim, int TDim>
+  struct traits<GaussNewton<Scalar, XDim, TDim>> {
+    static constexpr bool for_vector_function = true;
+  };
+} // namespace internal
+
+template<typename Scalar, int XDim, int TDim>
 struct GaussNewton : Algo<Scalar,XDim,TDim> {
   MANNUMOPT_ALGO_TYPEDEFS(Scalar, XDim, TDim);
 

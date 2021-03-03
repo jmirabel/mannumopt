@@ -24,6 +24,8 @@ namespace internal
   {
     x_plus_v = x + v;
   }
+
+  template<typename T> struct traits {};
 }
 
 template<typename Scalar, int XDim, int TDim = XDim>
@@ -49,6 +51,11 @@ struct Algo {
     if (verbose()) mannumopt::print(*cout, print_headers, args...);
   }
 };
+
+template<typename Scalar, int XDim, int TDim = XDim> struct BFGS;
+template<typename Scalar, int XDim, int TDim = XDim> struct NewtonTR;
+template<typename Scalar, int XDim, int TDim = XDim> struct NewtonLS;
+template<typename Scalar, int XDim, int TDim = XDim> struct GaussNewton;
 
 #define MANNUMOPT_ALGO_TYPEDEFS(Scalar,XDim,TDim)    \
   typedef Algo<Scalar, XDim, TDim> AlgoBase;         \
