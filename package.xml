@@ -1,0 +1,13 @@
+<?xml version='1.0'?>
+<package format='2'>
+ <name>mannumopt</name>
+ <version>0.0.0</version>
+ <description>Numerical optimization on manifolds</description>
+
+ <maintainer email='josephmirabel@gmail.com'>Joseph Mirabel</maintainer>
+ <license>BSD</license>
+
+ <author>Joseph Mirabel</author>
+
+ <depend>eigen3</depend>
+</package>
