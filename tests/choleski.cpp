@@ -40,5 +40,14 @@ BOOST_AUTO_TEST_CASE(approx_choleski)
 
   M = M * M.transpose();
   run(M);
-}
 
+  /*
+  double u = 10;
+  trustRegion::find_root_of_polynom<double>(-1.,1.,1.,1.,1.,1e-3,u);
+  std::cout << u << std::endl;
+
+  u = 10;
+  trustRegion::find_root_of_polynom2<double>(-1.,1.,1.,1.,1.,1e-3,u);
+  std::cout << u << std::endl;
+  */
+}
