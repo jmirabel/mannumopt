@@ -9,6 +9,8 @@ install(DIRECTORY include/mannumopt
   FILES_MATCHING PATTERN "*.hpp")
 
 find_package(Eigen3 3.3 REQUIRED)
+find_package(NLopt)
+
 add_library(mannumopt INTERFACE)
 target_include_directories(mannumopt INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

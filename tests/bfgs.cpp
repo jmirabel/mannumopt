@@ -1,6 +1,8 @@
 #include <mannumopt/bfgs.hpp>
 #include <mannumopt/line-search/armijo.hpp>
 
+#include <nlopt.hpp>
+
 #include <iostream>
 #include <chrono>
 
@@ -32,6 +34,56 @@ void bfgs(const char* type, Function<N> func, typename Function<N>::VectorS x)
   status(type, bfgs, res, start, end, func, x);
 }
 
+template<int N, template<int> class Function>
+void slsqp_nlopt(Function<N> func, typename Function<N>::VectorS x)
+{
+  typedef typename Function<N>::VectorS VectorS;
+  typedef typename Function<N>::RowVectorS RowVectorS;
+
+  auto obj = [](const std::vector<double> &x, std::vector<double> &grad, void *data) -> double
+  {
+    Function<N>& func (*reinterpret_cast<Function<N>*>(data));
+
+    VectorS X = Eigen::Map<const VectorS>(x.data());
+    double f;
+    if (grad.empty())
+      func.f(X, f);
+    else {
+      RowVectorS fx;
+      func.f_fx(X, f, fx);
+      Eigen::Map<RowVectorS>(grad.data()) = fx;
+    }
+    return f;
+  };
+
+
+  nlopt::opt opt (nlopt::LD_SLSQP, N);
+  //nlopt::opt opt (nlopt::LD_LBFGS, N);
+  opt.set_min_objective(obj, &func);
+  opt.set_stopval(0.000001);
+  opt.set_maxeval(1000);
+
+  std::vector<double> x0(N);
+  Eigen::Map<VectorS>(x0.data()) = x;
+
+  double minf;
+  auto start = chrono::steady_clock::now(), end = start;
+
+  bool res = false;
+  try{
+    start = chrono::steady_clock::now();
+    nlopt::result result = opt.optimize(x0, minf);
+    end = chrono::steady_clock::now();
+    res = true;
+  }
+  catch(std::exception &e) {
+    std::cout << "SLSQP failed: " << e.what() << std::endl;
+  }
+  x = Eigen::Map<const VectorS>(x0.data());
+  struct { int iter = -1; } fake_algo;
+  status("SLSQP", fake_algo, res, start, end, func, x);
+
+}
 
 template<int N, template<int> class Function, class... Args> void test_bfgs_tpl(int n, Args&&... args)
 {

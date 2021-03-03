@@ -9,6 +9,7 @@ function(add_cpp_test name)
 endfunction()
 
 add_cpp_test(bfgs)
+target_link_libraries(test-cpp-bfgs NLopt::nlopt)
 add_cpp_test(gauss-newton)
 add_cpp_test(newton-ls)
 add_cpp_test(newton-tr)
