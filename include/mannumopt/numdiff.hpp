@@ -1,5 +1,6 @@
+#pragma once
+
 #include <mannumopt/fwd.hpp>
-#include <mannumopt/function.hpp>
 
 namespace mannumopt {
 namespace numdiff {
