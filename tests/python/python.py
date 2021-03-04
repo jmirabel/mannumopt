@@ -41,6 +41,8 @@ class Quadratic(pymannumopt.Function):
 class QuadraticConstraint(pymannumopt.VectorFunction):
     def __init__(self):
         pymannumopt.VectorFunction.__init__(self)
+    def dimension(self):
+        return 1.
     def f(self, X, f):
         f[:] = np.sum(X**2) - 1
     def f_fx(self, X, f, fx):

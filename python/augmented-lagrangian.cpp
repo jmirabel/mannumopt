@@ -30,6 +30,7 @@ void exposeAugmentedLagrangian(py::module_ m)
     .def(py::init<int, int, int>())
     .def(py::init<int, int>())
     .def_readwrite("etol2", &AL::etol2)
+    .def_readwrite("lambda", &AL::lambda)
 
     .def("minimize", &call_minimize<BFGS>, "cost"_a, "constraints"_a, "x0"_a, "inner_algo"_a, "line_search"_a = lineSearch::Default(), "integrate"_a = py::none())
     .def("minimize", &call_minimize<NewtonLS>, "cost"_a, "constraints"_a, "x0"_a, "inner_algo"_a, "line_search"_a = lineSearch::Default(), "integrate"_a = py::none())

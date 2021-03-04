@@ -54,6 +54,12 @@ struct Penalty : Algo<Scalar,XDim,TDim> {
       f = c + 0.5 * mu * e.squaredNorm();
       fx.noalias() = cx + mu * e.transpose() * ex;
     }
+
+    double cost(const VectorX& X)
+    {
+      C.f(X, c);
+      return c;
+    }
   };
 
   template <typename CFunctor, typename EFunctor, int NDim>
@@ -109,6 +115,12 @@ struct Penalty : Algo<Scalar,XDim,TDim> {
       f.tail(E.dimension()) = sqrt_mu * e;
       fx.bottomRows(E.dimension()) = sqrt_mu * ex;
     }
+
+    double cost(const VectorX& X)
+    {
+      C.f(X, c);
+      return 0.5 * c.squaredNorm();
+    }
   };
 
   template <typename CFunctor, typename EFunctor, typename InnerAlgo, bool for_vector_function = internal::traits<InnerAlgo>::for_vector_function> struct PenaltyFuncTpl;
@@ -124,11 +136,9 @@ struct Penalty : Algo<Scalar,XDim,TDim> {
 
   Scalar mu = 1e-3;
 
-  VectorE lambda;
-  VectorX x2;
-
   Penalty(int xdim, int tdim, int ecdim)
-    : tdim(tdim), ecdim(ecdim), x2(xdim) {}
+    : tdim(tdim), ecdim(ecdim)
+  { (void)xdim; }
 
   Penalty(int dim, int ecdim) : Penalty(dim, dim, ecdim)
   {
@@ -152,7 +162,7 @@ struct Penalty : Algo<Scalar,XDim,TDim> {
 
     typedef typename PenaltyFuncTpl<CFunctor, EFunctor, InnerAlgo>::type PenaltyFunc;
 
-    PenaltyFunc pen {C, E, mu, x1.size()};
+    PenaltyFunc pen {C, E, mu, tdim};
 
     Scalar f_mu_small = 5,
            f_mu_big   = 25;
@@ -181,12 +191,10 @@ struct Penalty : Algo<Scalar,XDim,TDim> {
         // optimality: cx - lambda^T * ex = 0 => ensured by the inner algorithm.
         // feasibility: e = 0
         if (reached_desired_fxtol && feas < etol2) {
-          if (this->verbose())
-            C.f(x1, pen.c);
           this->print(true,
-              "", ' ',
+              1, "", ' ',
               "last_iter", iter,
-              "cost", pen.c,
+              "cost", pen.cost(x1),
               "*feas*", feas,
               "inner_its", ialgo.iter);
           return true;
@@ -201,25 +209,21 @@ struct Penalty : Algo<Scalar,XDim,TDim> {
         x2 = x1;
       }
 
-      if (this->verbose()) {
-        C.f(x1, pen.c);
-        E.f(x1, pen.e);
-      }
       if (mu > 1e10 || iter > maxIter) {
         this->print(true,
-            "", (success ? ' ' : '!'),
+            1, "", (success ? ' ' : '!'),
             (iter>maxIter ? "*last_iter*" : "last_iter"), iter,
-            "cost", pen.c,
-            "feas", pen.e.squaredNorm(),
+            "cost", pen.cost(x1),
+            "feas", feas,
             "inner_its", ialgo.iter,
             (mu > 1e10 ? "*mu*" : "mu"), mu);
         return false;
       }
       this->print(ialgo.verbose() || iter%10 == 0,
-          "", (success ? ' ' : '!'),
+          1, "", (success ? ' ' : '!'),
           "iter", iter,
-          "cost", pen.c,
-          "feas", pen.e.squaredNorm(),
+          "cost", pen.cost(x1),
+          "feas", feas,
           "inner_its", ialgo.iter,
           "mu", mu);
 

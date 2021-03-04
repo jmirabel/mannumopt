@@ -49,5 +49,12 @@ struct VectorFunction
   virtual void f(const VectorX& X, VectorN& f) = 0;
 
   virtual void f_fx(const VectorX& X, VectorN& f, MatrixNT& fx) = 0;
+
+  VectorN eval_f(const VectorX& X)
+  {
+    VectorN res(dimension());
+    f(X, res);
+    return res;
+  }
 };
 } // namespace mannumopt

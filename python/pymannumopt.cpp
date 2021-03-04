@@ -50,6 +50,7 @@ PYBIND11_MODULE(pymannumopt, m) {
     .def(py::init<>())
     .def("f", &VectorFunction::f)
     .def("f_fx", &VectorFunction::f_fx)
+    .def("eval_f", &VectorFunction::eval_f)
     ;
 
   py::class_<Algo>(m, "Algo")
@@ -68,4 +69,5 @@ PYBIND11_MODULE(pymannumopt, m) {
   exposeNewton(m);
   exposeAugmentedLagrangian(m);
   exposeGaussNewton(m);
+  exposePenalty(m);
 }
