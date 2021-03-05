@@ -12,7 +12,7 @@ struct Penalty : Algo<Scalar,XDim,TDim> {
   typedef Eigen::Matrix<Scalar, ECDim, 1> VectorE;
   typedef Eigen::Matrix<Scalar, ECDim, TDim> MatrixET;
 
-  Scalar etol2;
+  Scalar etol2 = 1e-10;
   using AlgoBase::fxtol2;
   using AlgoBase::maxIter;
   using AlgoBase::iter;

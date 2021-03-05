@@ -37,7 +37,7 @@ struct Algo {
   typedef Eigen::Matrix<Scalar, XDim, 1> VectorX;
   typedef Eigen::Matrix<Scalar, 1, XDim> RowVectorX;
 
-  Scalar xtol, fxtol2;
+  Scalar xtol = 1e-8, fxtol2 = 1e-12;
   size_type maxIter = 200;
   std::ostream* cout = nullptr;
 
