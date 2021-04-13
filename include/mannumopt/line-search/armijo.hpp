@@ -18,16 +18,22 @@ void operator() (Functor& func, IntegrateFunctor integrate,
     Scalar& a, VectorX& x2)
 {
   Scalar m = fx * p;
-  if (m >= 0)
-    throw std::runtime_error("Not a valid descent direction");
+  if (m >= 0) {
+    std::stringstream ss;
+    ss << "Not a valid descent direction: " << m << " should be < 0";
+    throw std::runtime_error(ss.str());
+  }
   Scalar f2;
   while(true) {
     integrate(x2, x, a*p);
     func.f(x2, f2);
     if (f2 < f + c * a * m) break;
     a *= r;
-    if (a < amin)
-      throw std::runtime_error("Not a valid descent direction");
+    if (a < amin) {
+      std::stringstream ss;
+      ss << "Not a valid descent direction: a (" << a << ") below amin (" << amin << ")";
+      throw std::runtime_error(ss.str());
+    }
   }
 }
 };
