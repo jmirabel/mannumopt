@@ -7,12 +7,8 @@
 
 namespace mannumopt::trustRegion {
 
-template<typename Scalar>
-void find_root(
-    auto f,
-    auto fu,
-    Scalar thr,
-    Scalar& u)
+template<typename Scalar, typename FVal, typename FDer>
+inline void find_root(const FVal& f, const FDer& fu, Scalar thr, Scalar& u)
 {
   Scalar v;
   while (fabs(v = f(u)) > thr) {

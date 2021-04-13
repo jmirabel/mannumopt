@@ -8,7 +8,8 @@
 
 namespace chrono = std::chrono;
 
-void gn_status(auto what, auto algo, bool success, auto start, auto end, auto f, auto x)
+template<typename Algo, typename Time, typename Func, typename Xtype>
+void gn_status(std::string what, Algo algo, bool success, Time start, Time end, Func f, Xtype x)
 {
   double v;
   f.residual(x,v);

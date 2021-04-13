@@ -105,7 +105,11 @@ struct Statistics {
 };
 std::map<std::string, Statistics> stats;
 
-void status(auto what, auto algo, bool success, auto start, auto end, auto f, auto x,
+template<typename Algo, typename Func, typename Xtype> inline
+void status(std::string what, Algo algo, bool success,
+    decltype(std::chrono::steady_clock::now()) start,
+    decltype(std::chrono::steady_clock::now()) end,
+    Func f, Xtype x,
     double v)
 {
   namespace chrono = std::chrono;
@@ -123,7 +127,11 @@ void status(auto what, auto algo, bool success, auto start, auto end, auto f, au
       << " in " << chrono::duration_cast<chrono::microseconds>(end - start).count() << "us");
 }
 
-void status(auto what, auto algo, bool success, auto start, auto end, auto f, auto x)
+template<typename Algo, typename Func, typename Xtype> inline
+void status(std::string what, Algo algo, bool success,
+    decltype(std::chrono::steady_clock::now()) start,
+    decltype(std::chrono::steady_clock::now()) end,
+    Func f, Xtype x)
 {
   double v;
   f.f(x,v);

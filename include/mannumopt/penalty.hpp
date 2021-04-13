@@ -30,7 +30,7 @@ struct Penalty : Algo<Scalar,XDim,TDim> {
     VectorE e;
     MatrixET ex;
 
-    PenalizedCost (CFunctor& C, EFunctor& E, Scalar& mu, auto tdim)
+    PenalizedCost (CFunctor& C, EFunctor& E, Scalar& mu, Eigen::Index tdim)
       : C(C), E(E), mu(mu), cx(tdim)
     {
       int ne = E.dimension();
@@ -79,7 +79,7 @@ struct Penalty : Algo<Scalar,XDim,TDim> {
     typename EFunctor::Output e;
     typename EFunctor::Derivative ex;
 
-    PenalizedResidual (CFunctor& C, EFunctor& E, Scalar& mu, auto tdim)
+    PenalizedResidual (CFunctor& C, EFunctor& E, Scalar& mu, Eigen::Index tdim)
       : C(C), E(E), mu(mu)
     {
       int nc = C.dimension();
