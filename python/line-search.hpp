@@ -16,15 +16,15 @@ virtual void operator() (FunctionBase& func, integrate_type integrate,
     double& a, VectorXd& x2) = 0;
 };
 
-struct Armijo : Base
+struct Armijo : Base, mannumopt::lineSearch::Armijo<double, Eigen::Dynamic>
 {
-  mannumopt::lineSearch::Armijo<double, Eigen::Dynamic> ls;
+  typedef mannumopt::lineSearch::Armijo<double, Eigen::Dynamic> Base;
 
   void operator() (FunctionBase& func, integrate_type integrate,
       const VectorXd& x, const VectorXd& p, double f, const RowVectorXd& fx,
       double& a, VectorXd& x2)
   {
-    ls(func, integrate, x, p, f, fx, a, x2);
+    static_cast<Base*>(this)->template operator()(func, integrate, x, p, f, fx, a, x2);
   }
 };
 

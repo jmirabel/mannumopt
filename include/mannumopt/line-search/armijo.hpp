@@ -31,7 +31,7 @@ void operator() (Functor& func, IntegrateFunctor integrate,
     a *= r;
     if (a < amin) {
       std::stringstream ss;
-      ss << "Not a valid descent direction: a (" << a << ") below amin (" << amin << ")";
+      ss << "Not a valid descent direction: m (" << m << "). a (" << a << ") below amin (" << amin << ")";
       throw std::runtime_error(ss.str());
     }
   }

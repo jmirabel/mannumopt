@@ -10,6 +10,9 @@ void exposeLineSearch(py::module_ main)
 
   py::class_<Armijo, Base>(m, "Armijo")
     .def(py::init<>())
+    .def_readwrite("r", &Armijo::r)
+    .def_readwrite("c", &Armijo::c)
+    .def_readwrite("amin", &Armijo::amin)
     ;
 
   py::class_<BisectionWeakWolfe, Base>(m, "BisectionWeakWolfe")
