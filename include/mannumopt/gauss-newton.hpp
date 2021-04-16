@@ -61,7 +61,7 @@ struct GaussNewton : Algo<Scalar,XDim,TDim> {
     ValueType f1(n);
     DerivativeType fx1(n, exx.rows());
 
-    Decomposition dec (exx.rows());
+    Decomposition dec;
 
     struct Norm2 : Function<Scalar, XDim, TDim> {
       void f(const VectorX& X, Scalar& fn) override
