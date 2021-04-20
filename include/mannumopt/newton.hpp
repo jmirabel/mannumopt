@@ -151,13 +151,11 @@ struct NewtonLS : Algo<Scalar,XDim,TDim> {
   }
 
   template<typename LineSearch, typename VectorFunctor, typename IntegrateFunctor, class Decomposition = ApproxLDLT<MatrixTT> >
-  bool minimize(VectorFunctor& func, IntegrateFunctor integrate, VectorX& x, LineSearch& ls)
+  bool minimize(VectorFunctor& func, IntegrateFunctor integrate, VectorX& x, LineSearch& ls, Decomposition dec = Decomposition())
   {
     iter = 0;
 
     Scalar f;
-
-    Decomposition dec(fxx.rows());
 
     while(true) {
       func.f_fx_fxx(x, f, fx, fxx);

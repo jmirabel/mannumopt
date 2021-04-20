@@ -15,6 +15,12 @@ target_include_directories(mannumopt INTERFACE
   $<INSTALL_INTERFACE:include>)
 target_link_libraries(mannumopt INTERFACE Eigen3::Eigen)
 
+set(MANNUMOPT_PYTHON_BINDINGS ON CACHE BOOL "Enable Python bindings")
+if (MANNUMOPT_PYTHON_BINDINGS)
+  add_subdirectory(python)
+endif()
+
 enable_testing()
-add_subdirectory(python)
-add_subdirectory(tests)
+if(BUILD_TESTING)
+  add_subdirectory(tests)
+endif()

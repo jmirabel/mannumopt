@@ -49,7 +49,7 @@ struct GaussNewton : Algo<Scalar,XDim,TDim> {
   }
 
   template<typename LineSearch, typename VectorValuedFunctor, typename IntegrateFunctor, class Decomposition = Eigen::LDLT<MatrixTT> >
-  bool minimize(VectorValuedFunctor& func, IntegrateFunctor integrate, VectorX& x1, LineSearch& ls)
+  bool minimize(VectorValuedFunctor& func, IntegrateFunctor integrate, VectorX& x1, LineSearch& ls, Decomposition dec = Decomposition())
   {
     iter = 0;
 
@@ -60,8 +60,6 @@ struct GaussNewton : Algo<Scalar,XDim,TDim> {
 
     ValueType f1(n);
     DerivativeType fx1(n, exx.rows());
-
-    Decomposition dec;
 
     struct Norm2 : Function<Scalar, XDim, TDim> {
       void f(const VectorX& X, Scalar& fn) override

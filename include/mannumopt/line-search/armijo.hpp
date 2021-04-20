@@ -23,11 +23,15 @@ void operator() (Functor& func, IntegrateFunctor integrate,
     ss << "Not a valid descent direction: " << m << " should be < 0";
     throw std::runtime_error(ss.str());
   }
+  if (-a*m < std::abs(f) * Eigen::NumTraits<Scalar>::dummy_precision()) {
+    integrate(x2, x, a*p);
+    return;
+  }
   Scalar f2;
   while(true) {
     integrate(x2, x, a*p);
     func.f(x2, f2);
-    if (f2 < f + c * a * m) break;
+    if (f2 <= f + c * a * m) break;
     a *= r;
     if (a < amin) {
       std::stringstream ss;
