@@ -133,9 +133,6 @@ struct NewtonLS : Algo<Scalar,XDim,TDim> {
   VectorT p;
   VectorX xn;
 
-  Scalar eta = 0.1;
-  Scalar u_maxstep = 2.;
-
   NewtonLS(int xdim, int tdim) :
     fxx(tdim,tdim),
     fx(tdim),
@@ -157,7 +154,6 @@ struct NewtonLS : Algo<Scalar,XDim,TDim> {
   bool minimize(VectorFunctor& func, IntegrateFunctor integrate, VectorX& x, LineSearch& ls)
   {
     iter = 0;
-    Scalar maxstep = u_maxstep / 2;
 
     Scalar f;
 
